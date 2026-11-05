@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#120c28">
+<title>天宫</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#e8c86a; --gold2:#f5e3a8; --gold-d:#b8963f;
+  --ink:#0d0820; --ink2:#171034; --ink3:#241a4d;
+  --txt:#eae4ff; --sub:#9d92c4; --line:rgba(232,200,106,.18);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:#0d0820;color:var(--txt);min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(ellipse at 15% -10%,rgba(120,80,220,.35),transparent 55%),
+    radial-gradient(ellipse at 88% 5%,rgba(60,140,220,.22),transparent 50%),
+    radial-gradient(ellipse at 50% 115%,rgba(232,200,106,.14),transparent 55%);
+  background-attachment:fixed;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit}
+
+/* ---------- 登录 ---------- */
+#gate{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
+  padding:22px;overflow-y:auto;
+  background:radial-gradient(ellipse at 50% 0%,rgba(120,80,220,.45),transparent 60%),#0d0820}
+#gate.off{display:none}
+.stars{position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 78% 12%,#fff,transparent),
+    radial-gradient(1px 1px at 45% 34%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 88% 58%,#fff,transparent),
+    radial-gradient(1px 1px at 25% 72%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 62% 84%,#fff,transparent),
+    radial-gradient(1px 1px at 8% 92%,#fff,transparent);
+  opacity:.55;animation:twinkle 5s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.35}50%{opacity:.75}}
+.gcard{position:relative;width:100%;max-width:340px;padding:34px 24px 26px;border-radius:26px;
+  background:linear-gradient(165deg,rgba(36,26,77,.96),rgba(23,16,52,.98));
+  border:1px solid var(--line);
+  box-shadow:0 26px 70px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);
+  text-align:center;animation:pop .5s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.93) translateY(16px)}to{opacity:1;transform:none}}
+.gseal{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;
+  display:grid;place-items:center;font-size:30px;
+  background:radial-gradient(circle at 35% 30%,#2b2055,#150e2e);
+  border:1.5px solid rgba(232,200,106,.55);
+  box-shadow:0 0 26px rgba(232,200,106,.28),inset 0 0 18px rgba(232,200,106,.10)}
+.gcard h1{font-size:22px;font-weight:800;letter-spacing:6px;
+  background:linear-gradient(135deg,#f5e3a8,#e8c86a 55%,#c9a548);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:6px}
+.gcard .gsub{font-size:11px;color:var(--sub);letter-spacing:2px;margin-bottom:24px}
+.gin{width:100%;padding:13px 15px;border-radius:13px;margin-bottom:11px;
+  border:1px solid rgba(232,200,106,.20);background:rgba(255,255,255,.045);
+  font-size:14.5px;color:var(--txt);outline:none;transition:.2s;text-align:center}
+.gin:focus{border-color:rgba(232,200,106,.6);background:rgba(255,255,255,.075);
+  box-shadow:0 0 0 3px rgba(232,200,106,.10)}
+.gin::placeholder{color:#6f6493;letter-spacing:1px}
+.gcode{letter-spacing:8px;font-size:17px;font-weight:800;color:var(--gold2)}
+.gbtn{width:100%;padding:14px;border-radius:13px;font-size:15px;font-weight:800;
+  letter-spacing:3px;margin-top:5px;
+  background:linear-gradient(135deg,#f5e3a8,#e8c86a 50%,#c9a548);color:#2a1d05;
+  box-shadow:0 10px 26px rgba(232,200,106,.28);transition:.15s}
+.gbtn:active{transform:scale(.97)}
+.gtip{font-size:10.5px;color:#6f6493;margin-top:14px;line-height:1.8}
+.gtip b{color:var(--gold)}
+
+/* ---------- 主体 ---------- */
+#app{max-width:660px;margin:0 auto;padding:14px 14px 92px;display:none}
+#app.on{display:block}
+
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:4px}
+.hd .tt{flex:1;min-width:0}
+.hd h1{font-size:19px;font-weight:800;letter-spacing:2px;color:var(--gold2)}
+.hd p{font-size:11px;color:var(--sub);margin-top:3px;letter-spacing:1px}
+.ico{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.055);
+  border:1px solid var(--line);font-size:16px;display:grid;place-items:center;flex-shrink:0}
+.ico:active{transform:scale(.92)}
+
+.card{background:linear-gradient(160deg,rgba(36,26,77,.72),rgba(23,16,52,.82));
+  border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:13px;
+  box-shadow:0 8px 26px rgba(0,0,0,.28)}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-h b{font-size:14px;font-weight:800;letter-spacing:.5px;color:var(--gold2)}
+.card-h span{font-size:10.5px;color:var(--sub)}
+
+/* 英雄卡 */
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:20px;margin-bottom:14px;
+  background:linear-gradient(150deg,rgba(120,80,220,.45),rgba(40,26,90,.85) 55%,rgba(23,16,52,.95));
+  border:1px solid rgba(232,200,106,.26);
+  box-shadow:0 16px 44px rgba(0,0,0,.42)}
+.hero::after{content:"";position:absolute;right:-50px;top:-60px;width:180px;height:180px;
+  border-radius:50%;background:radial-gradient(circle,rgba(232,200,106,.22),transparent 68%)}
+.hero .hl{font-size:10.5px;letter-spacing:3px;color:var(--gold);opacity:.9}
+.hero .hn{font-size:23px;font-weight:900;margin:5px 0 3px;letter-spacing:1px}
+.hero .hq{font-size:12px;color:var(--sub);line-height:1.6}
+.lvrow{display:flex;align-items:center;gap:10px;margin-top:15px;position:relative;z-index:1}
+.lvbadge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(245,227,168,.28),rgba(232,200,106,.14));
+  border:1px solid rgba(232,200,106,.42);font-size:11.5px;font-weight:800;color:var(--gold2)}
+.bar{flex:1;height:8px;border-radius:6px;background:rgba(0,0,0,.35);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px;
+  background:linear-gradient(90deg,#c9a548,#f5e3a8);
+  transition:width .6s cubic-bezier(.2,1,.3,1)}
+.hero .hexp{font-size:10.5px;color:var(--sub);margin-top:7px;position:relative;z-index:1}
+
+/* 按钮组 */
+.btn{width:100%;padding:13px;border-radius:13px;font-size:14px;font-weight:800;
+  letter-spacing:1px;background:linear-gradient(135deg,#f5e3a8,#e8c86a 50%,#c9a548);
+  color:#2a1d05;box-shadow:0 8px 20px rgba(232,200,106,.22);transition:.15s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:rgba(255,255,255,.055);color:var(--gold2);
+  border:1px solid rgba(232,200,106,.28);box-shadow:none}
+.btn:disabled{background:rgba(255,255,255,.06);color:#6f6493;box-shadow:none}
+
+/* 快捷 */
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.qbtn{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:15px;
+  border-radius:16px;background:rgba(255,255,255,.045);border:1px solid var(--line);
+  transition:.15s;text-align:left}
+.qbtn:active{transform:scale(.97);background:rgba(255,255,255,.085)}
+.qbtn .qi{font-size:22px}
+.qbtn b{font-size:13px;font-weight:800;color:var(--gold2)}
+.qbtn span{font-size:10.5px;color:var(--sub)}
+
+/* 聊天 */
+.chat{display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:340px}
+.msgs{flex:1;overflow-y:auto;padding:4px 2px 8px;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:0}
+.m{margin-bottom:14px;display:flex;gap:9px;align-items:flex-start}
+.m.me{flex-direction:row-reverse}
+.m .av{width:34px;height:34px;border-radius:11px;flex-shrink:0;display:grid;
+  place-items:center;font-size:14px;font-weight:800;color:#1a1033;
+  background:linear-gradient(140deg,#f5e3a8,#d9b955)}
+.m.other .av{background:linear-gradient(140deg,#8f7cf0,#5d48c9);color:#fff}
+.m .mb{max-width:74%;min-width:0}
+.m .mn{font-size:10px;color:var(--sub);margin-bottom:4px;letter-spacing:.5px}
+.m.me .mn{text-align:right}
+.m .mt{padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.65;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.06);
+  word-break:break-word;white-space:pre-line}
+.m.me .mt{background:linear-gradient(135deg,rgba(232,200,106,.92),rgba(201,165,72,.92));
+  color:#2a1d05;border-color:transparent;font-weight:600}
+.chat-bar{display:flex;gap:9px;padding-top:11px;border-top:1px solid var(--line);margin-top:6px}
+.chat-bar input{flex:1;min-width:0;padding:12px 14px;border-radius:13px;
+  border:1px solid rgba(232,200,106,.20);background:rgba(255,255,255,.05);
+  color:var(--txt);font-size:14px;outline:none}
+.chat-bar input:focus{border-color:rgba(232,200,106,.55);background:rgba(255,255,255,.08)}
+.chat-bar input::placeholder{color:#6f6493}
+.chat-bar button{padding:0 20px;border-radius:13px;font-size:14px;font-weight:800;
+  background:linear-gradient(135deg,#f5e3a8,#e8c86a);color:#2a1d05;flex-shrink:0}
+.chat-bar button:active{transform:scale(.95)}
+.empty{text-align:center;color:#6f6493;font-size:12px;padding:34px 10px;line-height:1.9}
+
+/* 管理 */
+.crown{display:inline-block;font-size:9.5px;padding:2px 6px;border-radius:6px;
+  background:rgba(232,200,106,.18);color:var(--gold);border:1px solid rgba(232,200,106,.35);
+  margin-left:5px;vertical-align:middle;font-weight:800}
+.adm-row{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:13px;
+  background:rgba(255,255,255,.045);margin-bottom:8px;border:1px solid rgba(255,255,255,.05)}
+.adm-row .aa{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  font-size:13px;font-weight:800;color:#1a1033;background:linear-gradient(140deg,#f5e3a8,#d9b955);
+  flex-shrink:0}
+.adm-row .am{flex:1;min-width:0}
+.adm-row .am b{display:block;font-size:12.5px;font-weight:700}
+.adm-row .am span{font-size:10px;color:var(--sub)}
+.adm-row .ab{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+  font-size:12px;background:rgba(255,255,255,.06);flex-shrink:0}
+.adm-row .ab:active{transform:scale(.9)}
+.adm-sec{font-size:11px;color:var(--gold);font-weight:800;letter-spacing:1px;
+  margin:16px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.adm-sec:first-child{margin-top:0}
+.mini2{padding:7px 12px;border-radius:10px;font-size:11.5px;font-weight:800;
+  background:rgba(255,255,255,.07);color:var(--gold2);border:1px solid rgba(232,200,106,.2)}
+.mini2:active{transform:scale(.95)}
+.mini2.danger{color:#ff9d9d;border-color:rgba(255,120,120,.3);background:rgba(255,80,80,.10)}
+
+/* 文档 */
+.drop{border:1.5px dashed rgba(232,200,106,.38);border-radius:18px;padding:26px 16px;
+  text-align:center;background:rgba(232,200,106,.045);transition:.2s;margin-bottom:14px}
+.drop:active{background:rgba(232,200,106,.10)}
+.drop .di{font-size:34px;margin-bottom:9px}
+.drop b{display:block;font-size:14px;color:var(--gold2);margin-bottom:5px}
+.drop span{font-size:10.5px;color:var(--sub);line-height:1.7}
+.doc{display:flex;align-items:center;gap:11px;padding:12px;border-radius:14px;
+  background:rgba(255,255,255,.045);margin-bottom:9px;transition:.15s}
+.doc:active{background:rgba(255,255,255,.085)}
+.doc .di2{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  font-size:19px;background:rgba(232,200,106,.13);flex-shrink:0}
+.doc .dm{flex:1;min-width:0}
+.doc .dm b{display:block;font-size:12.5px;font-weight:700;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.doc .dm span{font-size:10px;color:var(--sub)}
+.doc .dx{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  font-size:13px;color:#a89ec9;flex-shrink:0;background:rgba(255,255,255,.05)}
+
+/* 我的 */
+.me-hero{text-align:center;padding:26px 16px 22px}
+.avatar{width:76px;height:76px;border-radius:24px;margin:0 auto 13px;display:grid;
+  place-items:center;font-size:32px;font-weight:900;color:#2a1d05;
+  background:linear-gradient(145deg,#f5e3a8,#d9b955);
+  box-shadow:0 12px 30px rgba(232,200,106,.30)}
+.me-hero h2{font-size:19px;font-weight:900;letter-spacing:1px;margin-bottom:5px}
+.me-hero .mt2{font-size:11.5px;color:var(--sub)}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px}
+.stat3 div{background:rgba(255,255,255,.045);border-radius:13px;padding:11px 6px;
+  border:1px solid rgba(255,255,255,.05)}
+.stat3 b{display:block;font-size:17px;font-weight:900;color:var(--gold2)}
+.stat3 span{font-size:10px;color:var(--sub)}
+
+.linkrow{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;
+  background:rgba(255,255,255,.045);margin-bottom:9px;text-decoration:none;color:inherit}
+.linkrow:active{background:rgba(255,255,255,.085)}
+.linkrow .li{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  font-size:19px;background:rgba(232,200,106,.13);flex-shrink:0}
+.linkrow .lm{flex:1;min-width:0}
+.linkrow .lm b{display:block;font-size:12.5px;font-weight:700}
+.linkrow .lm span{font-size:10px;color:var(--sub)}
+.linkrow .la{color:#6f6493;font-size:14px}
+
+/* 导航 */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;
+  background:rgba(15,10,34,.94);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);
+  padding:7px 0 calc(7px + env(safe-area-inset-bottom))}
+.tabbar .tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:4px 0;font-size:10px;color:#6f6493;font-weight:700;letter-spacing:1px;transition:.15s}
+.tabbar .tb i{font-size:19px;font-style:normal;line-height:1;transition:.18s}
+.tabbar .tb.on{color:var(--gold)}
+.tabbar .tb.on i{transform:translateY(-2px) scale(1.08)}
+
+.pane{display:none}
+.pane.on{display:block;animation:fade .24s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* 弹层 */
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+  padding:20px;background:rgba(6,3,16,.78);backdrop-filter:blur(6px)}
+.modal.on{display:flex}
+.sheet{width:100%;max-width:360px;max-height:84vh;overflow-y:auto;
+  background:linear-gradient(165deg,#241a4d,#171034);border-radius:22px;padding:24px 20px;
+  border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.6);
+  animation:pop .3s cubic-bezier(.2,1.2,.4,1) both}
+.sheet h3{font-size:17px;font-weight:800;color:var(--gold2);margin-bottom:12px;letter-spacing:1px}
+.sheet p{font-size:12.5px;color:var(--sub);line-height:1.9}
+.sheet .ok{width:100%;padding:13px;border-radius:13px;font-size:14px;font-weight:800;
+  letter-spacing:2px;margin-top:16px;
+  background:linear-gradient(135deg,#f5e3a8,#e8c86a);color:#2a1d05}
+.sheet .pre{font-size:12.5px;line-height:1.9;color:var(--txt);white-space:pre-wrap;
+  max-height:50vh;overflow-y:auto;background:rgba(0,0,0,.25);padding:13px;border-radius:12px}
+
+/* 广场 */
+.post{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.05);
+  border-radius:16px;padding:13px;margin-bottom:11px}
+.post .ph{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.post .pa{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  font-size:13px;font-weight:800;color:#1a1033;flex-shrink:0;
+  background:linear-gradient(140deg,#f5e3a8,#d9b955)}
+.post .pn{flex:1;min-width:0}
+.post .pn b{display:block;font-size:12.5px;font-weight:700}
+.post .pn span{font-size:9.5px;color:#6f6493}
+.post .pt{font-size:13px;line-height:1.75;color:#e2dbf7;white-space:pre-line;
+  word-break:break-word}
+.post .pm{display:inline-block;font-size:10px;padding:2px 8px;border-radius:7px;
+  background:rgba(232,200,106,.14);color:var(--gold);margin-bottom:7px;font-weight:700}
+.post .pf{display:flex;align-items:center;gap:14px;margin-top:11px;
+  padding-top:10px;border-top:1px solid rgba(255,255,255,.05)}
+.post .pf span{font-size:11px;color:#8a7fb0;display:flex;align-items:center;gap:4px}
+.post .pf span.on{color:var(--gold)}
+.post .pf .del{margin-left:auto;color:#8a5a5a}
+.pcom{background:rgba(0,0,0,.22);border-radius:10px;padding:9px 11px;margin-top:8px;
+  font-size:11.5px;line-height:1.7;color:#b9afd6}
+.pcom b{color:var(--gold2);font-weight:700}
+
+.rank{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:13px;
+  background:rgba(255,255,255,.045);margin-bottom:8px}
+.rank.me{background:rgba(232,200,106,.13);border:1px solid rgba(232,200,106,.3)}
+.rank .ri{width:26px;text-align:center;font-size:13px;font-weight:900;color:#8a7fb0;flex-shrink:0}
+.rank .ra{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  font-size:13px;font-weight:800;color:#1a1033;flex-shrink:0;
+  background:linear-gradient(140deg,#f5e3a8,#d9b955)}
+.rank .rn{flex:1;min-width:0}
+.rank .rn b{display:block;font-size:12.5px}
+.rank .rn span{font-size:10px;color:#6f6493}
+.rank .rv{font-size:12px;font-weight:800;color:var(--gold);flex-shrink:0}
+
+.ach{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ach div{background:rgba(255,255,255,.045);border-radius:12px;padding:11px 4px;
+  text-align:center;border:1px solid rgba(255,255,255,.05)}
+.ach div.got{background:rgba(232,200,106,.14);border-color:rgba(232,200,106,.34)}
+.ach i{font-style:normal;font-size:20px;display:block;margin-bottom:5px;
+  filter:grayscale(1);opacity:.35}
+.ach div.got i{filter:none;opacity:1}
+.ach span{font-size:9px;color:#8a7fb0;line-height:1.3;display:block}
+.ach div.got span{color:var(--gold2)}
+
+.ivcode{font-size:38px;font-weight:900;letter-spacing:12px;text-align:center;
+  color:var(--gold2);margin:6px 0 2px;text-indent:12px;
+  text-shadow:0 0 26px rgba(232,200,106,.45)}
+.ivtext{font-size:12px;line-height:1.85;color:#c9c0e6;background:rgba(0,0,0,.28);
+  border-radius:12px;padding:12px;margin:12px 0;white-space:pre-line;
+  max-height:130px;overflow-y:auto}
+.frombar{background:linear-gradient(135deg,rgba(232,200,106,.20),rgba(232,200,106,.08));
+  border:1px solid rgba(232,200,106,.4);border-radius:13px;padding:10px 13px;
+  font-size:12px;color:var(--gold2);line-height:1.7;margin-bottom:14px;text-align:center}
+
+.signin{width:100%;margin-top:13px;padding:11px;border-radius:12px;font-size:13px;
+  font-weight:800;letter-spacing:1px;position:relative;z-index:1;
+  background:rgba(255,255,255,.14);color:var(--gold2);border:1px solid rgba(232,200,106,.42)}
+.signin:active{transform:scale(.98)}
+.signin.ok{background:rgba(255,255,255,.06);color:#8a7fb0;border-color:rgba(255,255,255,.1)}
+
+.segbar{display:flex;gap:5px;background:rgba(0,0,0,.28);border-radius:12px;padding:4px;
+  margin-bottom:14px}
+.sg{flex:1;text-align:center;font-size:12px;font-weight:800;color:#8a7fb0;
+  padding:9px 0;border-radius:9px;transition:.2s}
+.sg.on{background:linear-gradient(135deg,rgba(245,227,168,.92),rgba(201,165,72,.92));
+  color:#2a1d05}
+
+.srch{width:100%;padding:11px 14px;border-radius:12px;margin-bottom:12px;
+  border:1px solid rgba(232,200,106,.20);background:rgba(255,255,255,.05);
+  color:var(--txt);font-size:13.5px;outline:none}
+.srch:focus{border-color:rgba(232,200,106,.5)}
+.srch::placeholder{color:#6f6493}
+
+.citem{padding:12px;border-radius:13px;background:rgba(255,255,255,.045);
+  margin-bottom:9px;border-left:3px solid rgba(232,200,106,.55)}
+.citem .ch{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px}
+.citem .ch b{font-size:12.5px;color:var(--gold2)}
+.citem .ch span{font-size:10px;color:#6f6493;flex-shrink:0}
+.citem .cb{font-size:12px;color:#c9c0e6;line-height:1.75}
+.citem .cb em{font-style:normal;color:var(--gold);font-weight:700}
+.citem .cf{margin-top:7px;display:flex;gap:8px;align-items:center}
+.tag{font-size:9.5px;padding:2px 7px;border-radius:6px;font-weight:800}
+.tag.l{background:rgba(255,200,80,.18);color:#ffd36a;border:1px solid rgba(255,200,80,.3)}
+.tag.m{background:rgba(255,140,60,.18);color:#ffa860;border:1px solid rgba(255,140,60,.3)}
+.tag.h{background:rgba(255,80,80,.18);color:#ff8c8c;border:1px solid rgba(255,80,80,.3)}
+.tag.g{background:rgba(126,232,154,.16);color:#9bf0b4;border:1px solid rgba(126,232,154,.3)}
+
+.wsum{display:flex;gap:8px;margin-bottom:12px}
+.wsum div{flex:1;background:rgba(255,255,255,.045);border-radius:12px;padding:10px 6px;
+  text-align:center;border:1px solid rgba(255,255,255,.05)}
+.wsum b{display:block;font-size:16px;font-weight:900;color:var(--gold2)}
+.wsum span{font-size:9.5px;color:var(--sub)}
+
+.vopt{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;
+  background:rgba(255,255,255,.045);margin-bottom:7px;transition:.15s}
+.vopt.mine{background:rgba(232,200,106,.16);border:1px solid rgba(232,200,106,.35)}
+.vopt .vn{flex:1;font-size:12.5px;font-weight:700}
+.vopt .vc{font-size:11px;color:var(--gold);font-weight:800}
+.vbar{height:6px;border-radius:4px;background:rgba(0,0,0,.3);overflow:hidden;margin-top:6px}
+.vbar i{display:block;height:100%;background:linear-gradient(90deg,#c9a548,#f5e3a8)}
+
+.toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,18px);z-index:400;
+  background:rgba(232,200,106,.96);color:#2a1d05;font-size:13px;font-weight:800;
+  padding:11px 20px;border-radius:22px;opacity:0;pointer-events:none;transition:.26s;
+  max-width:86vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (min-width:920px){
+  #app{max-width:980px;padding:24px 24px 110px}
+  .pane.on{display:grid;grid-template-columns:1fr 1fr;gap:15px;align-items:start}
+  .pane.on > .card{margin-bottom:0}
+  #paneChat.on{display:block}
+  .chat{height:calc(100vh - 230px)}
+  .tabbar{left:50%;right:auto;transform:translateX(-50%);width:560px;bottom:16px;
+    border-radius:18px;border:1px solid var(--line);box-shadow:0 12px 36px rgba(0,0,0,.5)}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 登录 ================= -->
+<div id="gate">
+  <div class="stars"></div>
+  <div class="gcard">
+    <div class="gseal">🏯</div>
+    <h1>天 宫</h1>
+    <p class="gsub">天 宫 小 队</p>
+    <div class="frombar" id="fromBar" style="display:none"></div>
+    <input class="gin" id="gName" placeholder="你的名字" autocomplete="off">
+    <input class="gin" id="gPass" type="password" placeholder="密码">
+    <input class="gin gcode" id="gCode" placeholder="邀请码" inputmode="numeric" maxlength="8" autocomplete="off">
+    <button class="gbtn" id="gBtn">入 内</button>
+    <p class="gtip" id="gTip">需要邀请码才能进入<br>第一次来会自动登记</p>
+  </div>
+</div>
+
+<!-- ================= 主界面 ================= -->
+<div id="app">
+
+  <div class="hd">
+    <div class="tt">
+      <h1 id="hdTitle">天 宫</h1>
+      <p id="hdSub">天宫小队 · 内部空间</p>
+    </div>
+    <button class="ico" id="btnMe">👤</button>
+  </div>
+
+  <!-- 首页 -->
+  <div class="pane on" id="paneHome">
+    <div class="hero">
+      <div class="hl" id="heroDate">天宫 · 今日</div>
+      <div class="hn" id="heroName">你好</div>
+      <div class="hq" id="heroQuote">让他说完，说出依据第几条，给他不服就重判的机会。</div>
+      <div class="lvrow">
+        <span class="lvbadge" id="heroLv">Lv.1</span>
+        <div class="bar"><i id="heroBar" style="width:0%"></i></div>
+      </div>
+      <div class="hexp" id="heroExp">经验 0 / 100</div>
+      <button class="signin" id="btnSign">📅 今日签到 +10 经验</button>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>📯 天宫公告</b><span id="cardDate"></span></div>
+      <div id="noticeBox" style="font-size:12.5px;line-height:1.9;color:#c9c0e6;white-space:pre-line"></div>
+      <button class="btn ghost" id="btnLaw" style="margin-top:12px">📜 查看天宫约法</button>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>⚡ 快捷入口</b><span>点一下就去</span></div>
+      <div class="quick">
+        <div class="qbtn" data-go="Chat">
+          <div class="qi">💬</div>
+          <b>去聊天</b>
+          <span>和大家说说话</span>
+        </div>
+        <div class="qbtn" data-go="Docs">
+          <div class="qi">📁</div>
+          <b>传文档</b>
+          <span>txt / PPT / PDF</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>🕐 最近动静</b><span id="actHint"></span></div>
+      <div id="actList"></div>
+    </div>
+  </div>
+
+  <!-- 聊天 -->
+  <div class="pane" id="paneChat">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-h"><b>💬 天宫聊天室</b><span id="msgCount">0 条</span></div>
+      <div class="chat">
+        <div class="msgs" id="msgs"></div>
+        <div class="chat-bar">
+          <input id="chatIn" placeholder="说点什么……" maxlength="300">
+          <button id="chatSend">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 广场 -->
+  <div class="pane" id="paneSquare">
+    <div class="card">
+      <div class="card-h"><b>📣 天宫广场</b><span id="sqCount">0 条</span></div>
+      <div class="segbar">
+        <span class="sg on" data-sq="feed">大家发的</span>
+        <span class="sg" data-sq="rank">排行榜</span>
+        <span class="sg" data-sq="ach">成就</span>
+      </div>
+      <div id="sqBody"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>✍️ 发一条</b><span>想说什么都行</span></div>
+      <div id="moodRow" style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap"></div>
+      <textarea id="postIn" placeholder="今天发生了什么？" maxlength="500"
+        style="width:100%;height:88px;padding:12px;border-radius:13px;resize:none;
+        border:1px solid rgba(232,200,106,.20);background:rgba(255,255,255,.05);
+        color:var(--txt);font-size:14px;outline:none;line-height:1.6"></textarea>
+      <button class="btn" id="btnPost" style="margin-top:10px">发 出 去</button>
+    </div>
+  </div>
+
+  <!-- 文档 -->
+  <div class="pane" id="paneDocs">
+    <div class="card">
+      <div class="card-h"><b>📁 天宫文库</b><span id="docCount">0 个文件</span></div>
+      <div class="drop" id="drop">
+        <div class="di">☁️</div>
+        <b>点这里上传文档</b>
+        <span>txt · md · doc · docx · ppt · pptx · pdf · 图片<br>单个文件不超过 20MB</span>
+      </div>
+      <input type="file" id="fileIn" multiple style="display:none">
+      <input class="srch" id="docSearch" placeholder="🔍 搜索文件名……">
+      <div id="docList"></div>
+    </div>
+  </div>
+
+  <!-- 法庭 -->
+  <div class="pane" id="paneLaw">
+    <div class="card">
+      <div class="card-h"><b>⚖️ 天宫法庭</b><span>法官 · CZ</span></div>
+      <div class="segbar">
+        <span class="sg on" data-law="case">开庭记录</span>
+        <span class="sg" data-law="warn">警告簿</span>
+        <span class="sg" data-law="vote">表决</span>
+      </div>
+      <div id="lawBody"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>📜 开庭须知</b><span>记住三件事</span></div>
+      <div style="font-size:12.5px;line-height:2;color:#c9c0e6">
+        ① 让他说完<br>
+        ② 说出你依据第几条<br>
+        ③ 给他不服就重判的机会
+      </div>
+      <button class="btn ghost" id="btnLaw2" style="margin-top:12px">📜 查看天宫约法</button>
+    </div>
+  </div>
+
+  <!-- 我的 -->
+  <div class="pane" id="paneMe">
+    <div class="card">
+      <div class="me-hero">
+        <div class="avatar" id="meAv">C</div>
+        <h2 id="meName">—</h2>
+        <div class="mt2" id="meLvText">Lv.1 · 天宫新人</div>
+        <div class="lvrow" style="margin-top:14px;padding:0 4px">
+          <span class="lvbadge" id="meLv">Lv.1</span>
+          <div class="bar"><i id="meBar" style="width:0%"></i></div>
+        </div>
+        <div class="hexp" style="margin-top:8px" id="meExp">经验 0 / 100</div>
+        <div class="stat3">
+          <div><b id="stMsg">0</b><span>消息</span></div>
+          <div><b id="stDoc">0</b><span>文档</span></div>
+          <div><b id="stDay">1</b><span>加入天数</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="adminCard" style="display:none">
+      <div class="card-h"><b>👑 天宫管理</b><span>超级管理员</span></div>
+      <p style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:12px">
+        你可以管理成员、清理聊天、删除文档、修改公告。</p>
+      <button class="btn" id="btnAdmin">打 开 管 理 面 板</button>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>🎖️ 我的成就</b><span id="achCount">0 / 8</span></div>
+      <div class="ach" id="achBox"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>🏛️ 天宫印记</b><span>等级说明</span></div>
+      <div id="lvTable" style="font-size:12px;line-height:2;color:#c9c0e6"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>💌 邀请好友</b><span>把天宫告诉别人</span></div>
+      <div style="font-size:11.5px;color:#9d92c4;line-height:1.9;margin-bottom:12px">
+        微信、QQ 好友都能收到。邀请码统一是 <b style="color:#e8c86a">1092</b>。</div>
+      <button class="btn" id="btnInvite">邀 请 好 友 进 天 宫</button>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>🔗 去老地方</b><span>以前的网站</span></div>
+      <a class="linkrow" href="https://jv8g8d.csb.app/" target="_blank" rel="noopener">
+        <div class="li">🐌</div>
+        <div class="lm"><b>小蜗牛成长记录</b><span>喂食打卡 · 成长日历</span></div>
+        <div class="la">→</div>
+      </a>
+      <a class="linkrow" href="https://hwrxh7.csb.app/" target="_blank" rel="noopener">
+        <div class="li">💻</div>
+        <div class="lm"><b>云电脑启动器</b><span>模拟电脑桌面</span></div>
+        <div class="la">→</div>
+      </a>
+      <a class="linkrow" href="https://wjcdd7.csb.app/" target="_blank" rel="noopener">
+        <div class="li">🎁</div>
+        <div class="lm"><b>妹妹积分宝箱</b><span>任务 · 抽奖 · 兑换</span></div>
+        <div class="la">→</div>
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><b>⚙️ 设置</b><span>小心操作</span></div>
+      <div style="display:flex;gap:9px;margin-bottom:10px">
+        <button class="btn ghost" id="btnPack" style="flex:1">📦 生成搬家码</button>
+        <button class="btn ghost" id="btnUnpack" style="flex:1">📥 粘贴恢复</button>
+      </div>
+      <button class="btn ghost" id="btnLogout" style="margin-bottom:10px">退出登录</button>
+      <button class="btn ghost" id="btnReset" style="color:#e88">清空本机天宫数据</button>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <div class="tb on" data-tab="Home"><i>🏯</i>首页</div>
+    <div class="tb" data-tab="Square"><i>📣</i>广场</div>
+    <div class="tb" data-tab="Chat"><i>💬</i>聊天</div>
+    <div class="tb" data-tab="Docs"><i>📁</i>文档</div>
+    <div class="tb" data-tab="Law"><i>⚖️</i>法庭</div>
+    <div class="tb" data-tab="Me"><i>👤</i>我的</div>
+  </nav>
+</div>
+
+<div class="modal" id="mBox">
+  <div class="sheet">
+    <h3 id="mbTitle">提示</h3>
+    <div id="mbBody"></div>
+    <button class="ok" id="mbOk">知 道 了</button>
+  </div>
+</div>
+
+<div class="modal" id="mInput">
+  <div class="sheet">
+    <h3 id="ipTitle">修改</h3>
+    <div id="ipFields"></div>
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <button class="mini2" id="ipCancel" style="flex:1;padding:12px">取消</button>
+      <button class="ok" id="ipOk" style="flex:1;margin:0">确 定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="mInvite">
+  <div class="sheet">
+    <h3 style="text-align:center">💌 邀请好友</h3>
+    <div class="ivcode">1092</div>
+    <p style="text-align:center;font-size:11px;color:#6f6493">天宫邀请码</p>
+    <div class="ivtext" id="ivText"></div>
+    <button class="ok" id="ivShare" style="margin-top:0">📤 分享给微信 / QQ 好友</button>
+    <div style="display:flex;gap:9px;margin-top:9px">
+      <button class="mini2" id="ivCopy" style="flex:1;padding:12px">📋 复制邀请语</button>
+      <button class="mini2" id="ivQq" style="flex:1;padding:12px">🐧 去 QQ</button>
+    </div>
+    <button class="mini2" id="ivClose" style="width:100%;padding:12px;margin-top:9px">关 闭</button>
+  </div>
+</div>
+
+<div class="modal" id="mConfirm">
+  <div class="sheet">
+    <h3 id="cfTitle">确认一下</h3>
+    <p id="cfText"></p>
+    <div style="display:flex;gap:9px;margin-top:16px">
+      <button class="mini2" id="cfNo" style="flex:1;padding:12px">取 消</button>
+      <button class="mini2 danger" id="cfYes" style="flex:1;padding:12px">确 定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   天宫  v1
+   数据保存在这台设备上，全队共用一台设备时可以互相看见
+   ============================================================ */
+
+var INVITE = '1092';
+var LV_TABLE = [
+  { lv: 1, need: 0,    name: '天宫新人' },
+  { lv: 2, need: 100,  name: '天宫队员' },
+  { lv: 3, need: 250,  name: '天宫老兵' },
+  { lv: 4, need: 450,  name: '天宫执事' },
+  { lv: 5, need: 700,  name: '天宫长老' },
+  { lv: 6, need: 1000, name: '天宫大臣' },
+  { lv: 7, need: 1400, name: '天宫元老' },
+  { lv: 8, need: 1900, name: '天宫星君' },
+  { lv: 9, need: 2500, name: '天宫真君' },
+  { lv: 10, need: 3200, name: '天宫之首' }
+];
+
+/* ---------- 存储 ---------- */
+function st(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function sw(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function rm(k) { try { localStorage.removeItem(k); } catch (e) {} }
+function jget(k, dft) {
+  try { var v = JSON.parse(st(k)); return v === null || v === undefined ? dft : v; }
+  catch (e) { return dft; }
+}
+
+var K_USERS = 'tg_users', K_SESS = 'tg_sess', K_MSGS = 'tg_msgs';
+var UID = st(K_SESS) || '';
+
+function users() { var a = jget(K_USERS, []); return Array.isArray(a) ? a : []; }
+function saveUsers(a) { sw(K_USERS, JSON.stringify(a)); }
+function curUser() {
+  var a = users();
+  for (var i = 0; i < a.length; i++) if (a[i].id === UID) return a[i];
+  return null;
+}
+function saveUser(u) {
+  var a = users();
+  for (var i = 0; i < a.length; i++) if (a[i].id === u.id) a[i] = u;
+  saveUsers(a);
+}
+
+/* ---------- 工具 ---------- */
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function uid(p) { return p + Date.now().toString(36) + Math.floor(Math.random() * 900 + 100); }
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+function fmtTime(ts) {
+  var d = new Date(ts);
+  var t = todayStr();
+  var ds = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  var hm = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  return ds === t ? hm : (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hm;
+}
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1024 / 1024).toFixed(1) + ' MB';
+}
+var tTimer = null;
+function toast(m) {
+  var el = document.getElementById('toast');
+  el.textContent = m; el.classList.add('on');
+  clearTimeout(tTimer);
+  tTimer = setTimeout(function () { el.classList.remove('on'); }, 1900);
+}
+function modal(title, html) {
+  document.getElementById('mbTitle').textContent = title;
+  document.getElementById('mbBody').innerHTML = html;
+  document.getElementById('mBox').classList.add('on');
+}
+
+/* ---------- 等级 ---------- */
+function lvOf(exp) {
+  var cur = LV_TABLE[0];
+  for (var i = 0; i < LV_TABLE.length; i++) if (exp >= LV_TABLE[i].need) cur = LV_TABLE[i];
+  return cur;
+}
+function nextLv(exp) {
+  for (var i = 0; i < LV_TABLE.length; i++) if (exp < LV_TABLE[i].need) return LV_TABLE[i];
+  return null;
+}
+function lvProgress(exp) {
+  var c = lvOf(exp), n = nextLv(exp);
+  if (!n) return 100;
+  var span = n.need - c.need;
+  return Math.max(0, Math.min(100, ((exp - c.need) / span) * 100));
+}
+function addExp(n, reason) {
+  var u = curUser();
+  if (!u) return;
+  u.exp = (u.exp || 0) + n;
+  saveUser(u);
+  renderAll();
+}
+
+/* ---------- 消息 ---------- */
+function msgs() { var a = jget(K_MSGS, []); return Array.isArray(a) ? a : []; }
+function saveMsgs(a) { sw(K_MSGS, JSON.stringify(a.slice(-300))); }
+
+/* ============================================================
+   邀请好友
+   ============================================================ */
+var FROM = '';
+try {
+  var qs = new URLSearchParams(location.search);
+  FROM = (qs.get('from') || '').slice(0, 20);
+} catch (e) { FROM = ''; }
+
+function baseURL() {
+  return location.href.split('?')[0].split('#')[0];
+}
+function inviteText() {
+  var u = curUser();
+  var name = u ? u.name : '一位朋友';
+  return '我在「天宫小队」等你 🏯\n' +
+    '打开这个地址就能进：\n' + baseURL() + '?from=' + encodeURIComponent(name) + '\n\n' +
+    '邀请码：1092';
+}
+function fallbackCopy(t) {
+  var ta = document.createElement('textarea');
+  ta.value = t;
+  ta.style.position = 'fixed';
+  ta.style.top = '-1000px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); toast('已复制，去粘贴给好友'); }
+  catch (e) { toast('复制失败，长按文字手动复制'); }
+  document.body.removeChild(ta);
+}
+function copyText(t) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function () {
+        toast('已复制，去粘贴给好友');
+      }).catch(function () { fallbackCopy(t); });
+      return;
+    }
+  } catch (e) {}
+  fallbackCopy(t);
+}
+
+document.getElementById('btnInvite').onclick = function () {
+  document.getElementById('ivText').textContent = inviteText();
+  document.getElementById('mInvite').classList.add('on');
+};
+document.getElementById('ivClose').onclick = function () {
+  document.getElementById('mInvite').classList.remove('on');
+};
+document.getElementById('ivCopy').onclick = function () {
+  copyText(inviteText());
+};
+document.getElementById('ivShare').onclick = function () {
+  var txt = inviteText();
+  if (navigator.share) {
+    navigator.share({ title: '天宫小队', text: txt, url: baseURL() }).catch(function () {
+      copyText(txt);
+    });
+  } else {
+    copyText(txt);
+  }
+};
+document.getElementById('ivQq').onclick = function () {
+  copyText(inviteText());
+  var u = baseURL();
+  var share = 'mqqapi://share/to_fri?src_type=web&version=1&file_type=0&share_type=0' +
+    '&title=' + encodeURIComponent('天宫小队 邀请你') +
+    '&description=' + encodeURIComponent('邀请码 1092') +
+    '&url=' + encodeURIComponent(u);
+  try { location.href = share; } catch (e) {}
+  setTimeout(function () {
+    toast('若没打开 QQ，就把复制的内容粘过去');
+  }, 1000);
+};
+
+/* ============================================================
+   登录
+   ============================================================ */
+function doLogin() {
+  var name = (document.getElementById('gName').value || '').trim();
+  var pass = (document.getElementById('gPass').value || '').trim();
+  var code = (document.getElementById('gCode').value || '').trim();
+
+  if (!name) { toast('先写名字'); return; }
+  if (pass.length < 2) { toast('密码至少 2 位'); return; }
+  if (code !== INVITE) { toast('邀请码不对'); document.getElementById('gCode').value = ''; return; }
+
+  var arr = users(), u = null;
+  for (var i = 0; i < arr.length; i++) if (arr[i].name === name) u = arr[i];
+
+  if (u) {
+    if (u.pass !== pass) { toast('密码不对'); return; }
+  } else {
+    u = {
+      id: uid('u'), name: name, pass: pass,
+      exp: 20, joined: Date.now(), lastSign: '', signDays: 0,
+      role: arr.length === 0 ? 'super' : 'member',
+      inviter: FROM || ''
+    };
+    arr.push(u);
+    saveUsers(arr);
+    if (u.role === 'super') toast('你是第一个来的，已设为超级管理员');
+  }
+  sw(K_SESS, u.id);
+  UID = u.id;
+  boot();
+  toast('欢迎回天宫，' + name);
+}
+
+/* ============================================================
+   渲染
+   ============================================================ */
+function renderAll() {
+  var u = curUser();
+  if (!u) return;
+  var exp = u.exp || 0;
+  var lv = lvOf(exp), nx = nextLv(exp), pg = lvProgress(exp);
+  var d = new Date();
+  var dstr = (d.getMonth() + 1) + '月' + d.getDate() + '日';
+
+  document.getElementById('heroDate').textContent = '天宫 · ' + dstr;
+  document.getElementById('cardDate').textContent = dstr;
+  var sup = u.role === 'super';
+  document.getElementById('heroName').innerHTML = '你好，' + esc(u.name) +
+    (sup ? '<span class="crown">超管</span>' : '');
+
+  var cfg = jget('tg_cfg', {});
+  document.getElementById('noticeBox').textContent = cfg.notice ||
+    '天宫小队 · 内部空间。\n有事先说，说完当场判。\n—— 法官 CZ';
+  document.getElementById('adminCard').style.display = sup ? '' : 'none';
+  document.getElementById('heroLv').textContent = 'Lv.' + lv.lv + ' ' + lv.name;
+  document.getElementById('heroBar').style.width = pg + '%';
+  document.getElementById('heroExp').textContent = nx
+    ? ('经验 ' + exp + ' / ' + nx.need + '　再 ' + (nx.need - exp) + ' 升 ' + nx.name)
+    : ('经验 ' + exp + '　已是最高等级');
+
+  document.getElementById('meAv').textContent = u.name.slice(0, 1);
+  document.getElementById('meName').innerHTML = esc(u.name) +
+    (sup ? '<span class="crown">超管</span>' : '');
+  document.getElementById('meLvText').textContent = 'Lv.' + lv.lv + ' · ' + lv.name;
+  document.getElementById('meLv').textContent = 'Lv.' + lv.lv;
+  document.getElementById('meBar').style.width = pg + '%';
+  document.getElementById('meExp').textContent = nx
+    ? ('经验 ' + exp + ' / ' + nx.need)
+    : ('经验 ' + exp);
+
+  var myMsgs = msgs().filter(function (m) { return m.uid === u.id; }).length;
+  document.getElementById('stMsg').textContent = myMsgs;
+  document.getElementById('stDay').textContent =
+    Math.max(1, Math.ceil((Date.now() - (u.joined || Date.now())) / 86400000));
+  document.getElementById('stDoc').textContent = DOCS.length;
+
+  var lt = '';
+  LV_TABLE.forEach(function (t) {
+    var on = t.lv <= lv.lv;
+    lt += '<div style="display:flex;justify-content:space-between;' +
+      (on ? '' : 'opacity:.45') + '">' +
+      '<span>' + (on ? '✅ ' : '') + 'Lv.' + t.lv + ' ' + t.name + '</span>' +
+      '<span style="color:#8a7fb0">' + t.need + ' 经验</span></div>';
+  });
+  document.getElementById('lvTable').innerHTML = lt;
+
+  renderMsgs();
+  renderDocs();
+  renderAct();
+  renderLaw();
+  renderSquare();
+  renderMoods();
+
+  var sb = document.getElementById('btnSign');
+  if (sb) {
+    var signed = u.lastSign === todayStr();
+    sb.textContent = signed
+      ? ('✅ 今天已签到 · 连签 ' + (u.signDays || 1) + ' 天')
+      : '📅 今日签到 +10 经验';
+    sb.classList.toggle('ok', signed);
+  }
+  checkAch();
+}
+
+function renderMsgs() {
+  var box = document.getElementById('msgs');
+  if (!box) return;
+  var list = msgs();
+  var u = curUser();
+  document.getElementById('msgCount').textContent = list.length + ' 条';
+  if (!list.length) {
+    box.innerHTML = '<div class="empty">还没有人说话<br>你是第一个来的 🏯</div>';
+    return;
+  }
+  var h = '';
+  var us = users();
+  var superMap = {};
+  us.forEach(function (x) { if (x.role === 'super') superMap[x.id] = 1; });
+  list.forEach(function (m) {
+    var me = m.uid === u.id;
+    h += '<div class="m ' + (me ? 'me' : 'other') + '">' +
+      '<div class="av">' + esc(m.name.slice(0, 1)) + '</div>' +
+      '<div class="mb"><div class="mn">' + esc(m.name) +
+        (superMap[m.uid] ? '<span class="crown">超管</span>' : '') +
+        ' · ' + fmtTime(m.t) + '</div>' +
+      '<div class="mt">' + esc(m.text) + '</div></div></div>';
+  });
+  box.innerHTML = h;
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderAct() {
+  var box = document.getElementById('actList');
+  if (!box) return;
+  var acts = jget('tg_acts', []);
+  acts = acts.slice(0, 6);
+  if (!acts.length) {
+    box.innerHTML = '<div style="font-size:12px;color:#6f6493;line-height:1.9">' +
+      '还没有动静。去聊聊天、传个文档，这里就会有记录。</div>';
+    return;
+  }
+  var h = '';
+  acts.forEach(function (a) {
+    h += '<div style="display:flex;gap:9px;align-items:flex-start;padding:9px 0;' +
+      'border-bottom:1px solid rgba(255,255,255,.05)">' +
+      '<span style="font-size:14px">' + a.icon + '</span>' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-size:12px;color:#d6cfee;line-height:1.6">' + esc(a.text) + '</div>' +
+      '<div style="font-size:10px;color:#6f6493">' + fmtTime(a.t) + '</div>' +
+      '</div></div>';
+  });
+  box.innerHTML = h;
+}
+
+function pushAct(icon, text) {
+  var a = jget('tg_acts', []);
+  a.unshift({ icon: icon, text: text, t: Date.now() });
+  sw('tg_acts', JSON.stringify(a.slice(0, 30)));
+  renderAct();
+}
+
+/* ============================================================
+   聊天
+   ============================================================ */
+function sendMsg() {
+  var inp = document.getElementById('chatIn');
+  var txt = (inp.value || '').trim();
+  if (!txt) return;
+  var u = curUser();
+  var list = msgs();
+  list.push({ uid: u.id, name: u.name, text: txt, t: Date.now() });
+  saveMsgs(list);
+  inp.value = '';
+  addExp(3);
+  pushAct('💬', u.name + '：' + (txt.length > 18 ? txt.slice(0, 18) + '…' : txt));
+  renderMsgs();
+}
+
+/* ============================================================
+   文档（IndexedDB）
+   ============================================================ */
+var DOCS = [];
+var idbP = null;
+function idb() {
+  if (idbP) return idbP;
+  idbP = new Promise(function (res, rej) {
+    var req = indexedDB.open('tiangong', 1);
+    req.onupgradeneeded = function (e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' });
+    };
+    req.onsuccess = function (e) { res(e.target.result); };
+    req.onerror = function (e) { rej(e); };
+  });
+  return idbP;
+}
+function idbAll() {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('docs', 'readonly');
+      var r = tx.objectStore('docs').getAll();
+      r.onsuccess = function () { res(r.result || []); };
+      r.onerror = rej;
+    });
+  });
+}
+function idbPut(o) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('docs', 'readwrite');
+      tx.objectStore('docs').put(o);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  });
+}
+function idbDel(id) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('docs', 'readwrite');
+      tx.objectStore('docs').delete(id);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  });
+}
+function idbGet(id) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('docs', 'readonly');
+      var r = tx.objectStore('docs').get(id);
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = rej;
+    });
+  });
+}
+
+function docIcon(name, type) {
+  var n = (name || '').toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(n)) return '🖼️';
+  if (/\.(pptx?|key)$/.test(n)) return '📊';
+  if (/\.(docx?|rtf|pages)$/.test(n)) return '📝';
+  if (/\.(xlsx?|csv|numbers)$/.test(n)) return '📈';
+  if (/\.pdf$/.test(n)) return '📕';
+  if (/\.(txt|md|json)$/.test(n)) return '📄';
+  if (type && type.indexOf('image') === 0) return '🖼️';
+  return '📎';
+}
+
+function renderDocs() {
+  var box = document.getElementById('docList');
+  if (!box) return;
+  var c = document.getElementById('docCount');
+  if (c) c.textContent = DOCS.length + ' 个文件';
+  var sd = document.getElementById('stDoc');
+  if (sd) sd.textContent = DOCS.length;
+  var se = document.getElementById('docSearch');
+  var kw = se ? (se.value || '').trim().toLowerCase() : '';
+  var list = DOCS.filter(function (d) {
+    return !kw || (d.name || '').toLowerCase().indexOf(kw) >= 0;
+  });
+  if (!DOCS.length) {
+    box.innerHTML = '<div class="empty">文库还空着<br>上传的文档会存在这台设备上</div>';
+    return;
+  }
+  if (!list.length) {
+    box.innerHTML = '<div class="empty">没找到「' + esc(kw) + '」<br>换个词试试</div>';
+    return;
+  }
+  var h = '';
+  list.sort(function (a, b) { return b.t - a.t; }).forEach(function (d) {
+    h += '<div class="doc" data-doc="' + d.id + '">' +
+      '<div class="di2">' + docIcon(d.name, d.type) + '</div>' +
+      '<div class="dm"><b>' + esc(d.name) + '</b><span>' +
+      fmtSize(d.size) + ' · ' + esc(d.uname) + ' · ' + fmtTime(d.t) + '</span></div>' +
+      '<div class="dx" data-del="' + d.id + '">🗑</div></div>';
+  });
+  box.innerHTML = h;
+}
+
+function loadDocs() {
+  idbAll().then(function (arr) {
+    DOCS = arr || [];
+    renderDocs();
+    renderAll();
+  }).catch(function () {
+    DOCS = [];
+    renderDocs();
+  });
+}
+
+function uploadFiles(files) {
+  var u = curUser();
+  if (!u || !files || !files.length) return;
+  var arr = Array.prototype.slice.call(files, 0, 10);
+  var ok = 0, tooBig = 0;
+  var chain = Promise.resolve();
+  arr.forEach(function (f) {
+    chain = chain.then(function () {
+      if (f.size > 20 * 1024 * 1024) { tooBig++; return; }
+      return idbPut({
+        id: uid('d'),
+        name: f.name,
+        type: f.type || '',
+        size: f.size,
+        uid: u.id,
+        uname: u.name,
+        t: Date.now(),
+        blob: f
+      }).then(function () { ok++; });
+    });
+  });
+  chain.then(function () {
+    if (ok) { addExp(ok * 5); pushAct('📁', u.name + ' 上传了 ' + ok + ' 个文档'); }
+    if (tooBig) toast(tooBig + ' 个文件超过 20MB，跳过了');
+    else if (ok) toast('上传成功 ' + ok + ' 个，+ ' + (ok * 5) + ' 经验');
+    loadDocs();
+  }).catch(function () {
+    toast('上传失败，可能空间不够了');
+  });
+}
+
+function openDoc(id) {
+  idbGet(id).then(function (d) {
+    if (!d) return;
+    var n = (d.name || '').toLowerCase();
+    var isText = /\.(txt|md|json|csv|log)$/.test(n) || (d.type || '').indexOf('text') === 0;
+    var isImg = /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(n) || (d.type || '').indexOf('image') === 0;
+
+    if (isImg) {
+      revokeLast();
+      var url = URL.createObjectURL(d.blob);
+      _objUrl = url;
+      modal(d.name, '<img src="' + url + '" style="width:100%;border-radius:12px">' +
+        '<div style="margin-top:12px"><a href="' + url + '" download="' + esc(d.name) + '" ' +
+        'style="color:#e8c86a;font-size:13px">⬇ 下载到本地</a></div>');
+      return;
+    }
+    if (isText) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        var t = String(fr.result || '').slice(0, 8000);
+        modal(d.name, '<div class="pre">' + esc(t) + '</div>' +
+          '<div style="margin-top:12px;font-size:11px;color:#6f6493">' +
+          '只显示前 8000 字 · ' + fmtSize(d.size) + '</div>');
+      };
+      fr.readAsText(d.blob);
+      return;
+    }
+    // 其他格式：下载
+    var u2 = URL.createObjectURL(d.blob);
+    modal(d.name,
+      '<p>这个格式（' + esc(n.split('.').pop() || '未知') + '）没法在网页里直接看。<br>' +
+      '下载下来用电脑打开就能看到完整内容。</p>' +
+      '<a class="ok" href="' + u2 + '" download="' + esc(d.name) + '" ' +
+      'style="display:block;text-align:center;text-decoration:none;line-height:1.4">⬇ 下载这个文件</a>');
+  }).catch(function () { toast('打不开这个文件'); });
+}
+
+/* ============================================================
+   导航 / 事件
+   ============================================================ */
+function goTab(name) {
+  document.querySelectorAll('.tabbar .tb').forEach(function (x) {
+    x.classList.toggle('on', x.dataset.tab === name);
+  });
+  document.querySelectorAll('.pane').forEach(function (x) {
+    x.classList.toggle('on', x.id === 'pane' + name);
+  });
+  if (name === 'Chat') setTimeout(function () {
+    var b = document.getElementById('msgs');
+    if (b) b.scrollTop = b.scrollHeight;
+  }, 40);
+}
+
+document.querySelectorAll('.tabbar .tb').forEach(function (el) {
+  el.onclick = function () { goTab(el.dataset.tab); };
+});
+document.querySelectorAll('[data-go]').forEach(function (el) {
+  el.onclick = function () { goTab(el.getAttribute('data-go')); };
+});
+
+document.getElementById('btnMe').onclick = function () { goTab('Me'); };
+document.getElementById('gBtn').onclick = doLogin;
+document.getElementById('gCode').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') doLogin();
+});
+
+document.getElementById('chatSend').onclick = sendMsg;
+document.getElementById('chatIn').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') sendMsg();
+});
+
+document.getElementById('drop').onclick = function () {
+  document.getElementById('fileIn').click();
+};
+document.getElementById('fileIn').onchange = function (e) {
+  uploadFiles(e.target.files);
+  e.target.value = '';
+};
+
+document.addEventListener('click', function (e) {
+  var del = e.target.closest('[data-del]');
+  if (del) {
+    e.stopPropagation();
+    var id = del.getAttribute('data-del');
+    confirmBox('删掉这个文件？删了就找不回来。', function () {
+      idbDel(id).then(function () {
+        toast('已删除');
+        loadDocs();
+      });
+    });
+    return;
+  }
+  var d = e.target.closest('[data-doc]');
+  if (d) openDoc(d.getAttribute('data-doc'));
+});
+
+/* 天宫约法 */
+var LAW = '天宫约法 · 摘要\n\n' +
+  '法官：CZ（一人独任）　通过条件：全队过半数同意\n\n' +
+  '一、开庭三步\n' +
+  '原告先说，被告再说，说完当场判。双方各说 2 分钟，不许打断。\n\n' +
+  '二、判案守四条\n' +
+  '先听完再判、对谁都一样、不骂人不羞辱、能修补关系就先修补。\n\n' +
+  '三、处理只有五种\n' +
+  '当面道歉、实际补偿、暂停一次小队权利、做一次公共事务、全队表决的其他非羞辱性方式。\n\n' +
+  '四、不许做的\n' +
+  '不许打人推人罚站、不许罚钱没收东西、不许当众羞辱取外号、不许集体不理一个人、不许逼人退队。\n\n' +
+  '五、警告三级\n' +
+  '轻度累计 5 次不能参加活动，10 次退队；中度 2 次暂停活动，4 次退队；重度 1 次暂停一切，2 次退队。\n' +
+  '一个学期内有效，学期结束自动清零。\n\n' +
+  '六、说话和外号\n' +
+  '吵架不算违规；骂人算中度。"我只是开玩笑"不算理由；跟着起哄跟骂的人一样处理。\n\n' +
+  '七、底线\n' +
+  '有人被打、被长期排挤威胁、涉及较大金额、被要求做不愿意的身体接触、' +
+  '或有人威胁自伤——不判，直接找家长或老师。\n\n' +
+  '开庭只需记住三件事：\n' +
+  '让他说完 · 说出依据第几条 · 给他不服就重判的机会';
+
+var ds = document.getElementById('docSearch');
+if (ds) ds.addEventListener('input', function () { renderDocs(); });
+
+document.getElementById('btnLaw2').onclick = function () {
+  modal('📜 天宫约法', '<div class="pre">' + esc(LAW) + '</div>');
+};
+
+document.getElementById('btnLaw').onclick = function () {
+  modal('📜 天宫约法', '<div class="pre">' + esc(LAW) + '</div>');
+};
+document.getElementById('mbOk').onclick = function () {
+  document.getElementById('mBox').classList.remove('on');
+  revokeLast();
+};
+
+document.getElementById('btnLogout').onclick = function () {
+  rm(K_SESS); UID = '';
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('gate').classList.remove('off');
+  document.getElementById('gPass').value = '';
+  document.getElementById('gCode').value = '';
+};
+
+document.getElementById('btnReset').onclick = function () {
+  confirmBox('会清空本机的账号、聊天、法庭记录和所有文档，无法恢复。', function () {
+    rm(K_USERS); rm(K_SESS); rm(K_MSGS); rm('tg_acts');
+    rm('tg_cases'); rm('tg_warns'); rm('tg_votes'); rm('tg_cfg');
+    idbAll().then(function (arr) {
+      return Promise.all(arr.map(function (d) { return idbDel(d.id); }));
+    }).then(function () {
+      location.reload();
+    }).catch(function () { location.reload(); });
+  });
+};
+
+/* ============================================================
+   确认弹层（替代 confirm，手机更稳）
+   ============================================================ */
+var _objUrl = null;
+function revokeLast() {
+  if (_objUrl) { try { URL.revokeObjectURL(_objUrl); } catch (e) {} _objUrl = null; }
+}
+
+var cfCb = null;
+function confirmBox(text, cb, title) {
+  document.getElementById('cfTitle').textContent = title || '确认一下';
+  document.getElementById('cfText').textContent = text;
+  cfCb = cb;
+  document.getElementById('mConfirm').classList.add('on');
+}
+document.getElementById('cfNo').onclick = function () {
+  document.getElementById('mConfirm').classList.remove('on');
+  cfCb = null;
+};
+document.getElementById('cfYes').onclick = function () {
+  var f = cfCb;
+  document.getElementById('mConfirm').classList.remove('on');
+  cfCb = null;
+  if (f) f();
+};
+
+/* ============================================================
+   签到
+   ============================================================ */
+function doSign() {
+  var u = curUser();
+  if (!u) return;
+  var t = todayStr();
+  if (u.lastSign === t) { toast('今天已经签过啦'); return; }
+  var y = new Date();
+  y.setDate(y.getDate() - 1);
+  var ystr = y.getFullYear() + '-' + pad2(y.getMonth() + 1) + '-' + pad2(y.getDate());
+  u.signDays = (u.lastSign === ystr) ? ((u.signDays || 0) + 1) : 1;
+  u.lastSign = t;
+  var gain = 10 + (u.signDays >= 7 ? 20 : 0);
+  u.exp = (u.exp || 0) + gain;
+  saveUser(u);
+  renderAll();
+  pushAct('📅', u.name + ' 签到成功（连签 ' + u.signDays + ' 天）');
+  toast('签到成功 +' + gain + ' 经验' + (u.signDays >= 7 ? '　连签 7 天奖励！' : ''));
+}
+document.getElementById('btnSign').onclick = doSign;
+
+/* ============================================================
+   天宫法庭
+   ============================================================ */
+var LAW_TAB = 'case';
+
+function lawList(k) { var a = jget(k, []); return Array.isArray(a) ? a : []; }
+function lawSave(k, a) { sw(k, JSON.stringify(a)); }
+
+function renderLaw() {
+  var box = document.getElementById('lawBody');
+  if (!box) return;
+  var me = curUser();
+  var sup = me && me.role === 'super';
+  var h = '';
+
+  if (LAW_TAB === 'case') {
+    var cs = lawList('tg_cases');
+    h += '<button class="mini2" data-case-add="1" ' + (sup ? '' : 'style="display:none"') +
+      '>＋ 记录一次开庭</button>';
+    h += '<div style="height:12px"></div>';
+    if (!cs.length) {
+      h += '<div class="empty">还没有开庭记录' + (sup ? '<br>点上面的按钮记一次' : '') + '</div>';
+    }
+    cs.forEach(function (c) {
+      h += '<div class="citem">' +
+        '<div class="ch"><b>' + esc(c.plaintiff) + ' ⚔ ' + esc(c.defendant) + '</b>' +
+        '<span>' + fmtTime(c.t) + '</span></div>' +
+        '<div class="cb">事由：' + esc(c.reason) + '<br>' +
+        '判决：<em>' + esc(c.verdict) + '</em>' +
+        (c.article ? '<br>依据：第 ' + esc(c.article) + ' 条' : '') + '</div>' +
+        '<div class="cf"><span class="tag g">已判 · 法官 ' + esc(c.judge || 'CZ') + '</span>' +
+        (sup ? '<span class="mini2" style="margin-left:auto;padding:4px 10px;font-size:10.5px" ' +
+          'data-case-del="' + c.id + '">删除</span>' : '') +
+        '</div></div>';
+    });
+  } else if (LAW_TAB === 'warn') {
+    var ws = lawList('tg_warns');
+    var st = {};
+    ws.forEach(function (w) {
+      if (!st[w.who]) st[w.who] = { l: 0, m: 0, h: 0 };
+      if (st[w.who][w.level] !== undefined) st[w.who][w.level]++;
+    });
+    h += '<div class="wsum">' +
+      '<div><b>' + Object.keys(st).length + '</b><span>被警告人数</span></div>' +
+      '<div><b>' + ws.length + '</b><span>警告总数</span></div>' +
+      '<div><b>' + (ws.filter(function (w) { return w.level === 'h'; }).length) + '</b><span>重度</span></div>' +
+      '</div>';
+
+    var names = Object.keys(st);
+    if (names.length) {
+      h += '<div style="font-size:11px;color:#8a7fb0;margin-bottom:8px;line-height:1.9">';
+      names.forEach(function (n) {
+        var x = st[n], msg = '';
+        if (x.l >= 10 || x.m >= 4 || x.h >= 2) msg = '已达退队线';
+        else if (x.h >= 1) msg = '暂停一切（含发言）';
+        else if (x.m >= 2) msg = '暂停所有天宫活动';
+        else if (x.l >= 5) msg = '不能参加下次活动';
+        h += '· <b style="color:#e8c86a">' + esc(n) + '</b>　轻 ' + x.l + ' / 中 ' + x.m +
+          ' / 重 ' + x.h + (msg ? '　<span style="color:#ff9d9d">' + msg + '</span>' : '') + '<br>';
+      });
+      h += '</div>';
+    }
+
+    h += '<button class="mini2" data-warn-add="1" ' + (sup ? '' : 'style="display:none"') +
+      '>＋ 记一次警告</button><div style="height:12px"></div>';
+    if (!ws.length) h += '<div class="empty">还没有警告记录</div>';
+    ws.forEach(function (w) {
+      var cls = w.level === 'h' ? 'h' : (w.level === 'm' ? 'm' : 'l');
+      var nm = w.level === 'h' ? '重度' : (w.level === 'm' ? '中度' : '轻度');
+      h += '<div class="citem" style="border-left-color:' +
+        (w.level === 'h' ? '#ff8c8c' : (w.level === 'm' ? '#ffa860' : '#ffd36a')) + '">' +
+        '<div class="ch"><b>' + esc(w.who) + '</b><span>' + fmtTime(w.t) + '</span></div>' +
+        '<div class="cb">' + esc(w.reason) + '</div>' +
+        '<div class="cf"><span class="tag ' + cls + '">' + nm + '警告</span>' +
+        (sup ? '<span class="mini2" style="margin-left:auto;padding:4px 10px;font-size:10.5px" ' +
+          'data-warn-del="' + w.id + '">删除</span>' : '') +
+        '</div></div>';
+    });
+  } else {
+    var vs = lawList('tg_votes');
+    var total = users().length;
+    h += '<button class="mini2" data-vote-add="1">＋ 发起一次表决</button><div style="height:12px"></div>';
+    if (!vs.length) h += '<div class="empty">还没有表决' + '<br>改约法、退队，都要全队过半数同意</div>';
+    vs.forEach(function (v) {
+      var cnt = v.opts.map(function (o) { return o.v.length; });
+      var maxV = Math.max.apply(null, cnt);
+      var pass = maxV * 2 > total ? true : false;
+      h += '<div class="citem"><div class="ch"><b>' + esc(v.title) + '</b><span>' +
+        esc(v.by) + ' 发起</span></div>';
+      v.opts.forEach(function (o, i) {
+        var mine = o.v.indexOf(me.id) >= 0;
+        var pct = total ? Math.round(o.v.length / total * 100) : 0;
+        h += '<div class="vopt' + (mine ? ' mine' : '') + '" data-vote-opt="' + v.id + '|' + i + '">' +
+          '<div style="flex:1;min-width:0"><div class="vn">' + esc(o.t) +
+          (mine ? ' ✅' : '') + '</div>' +
+          '<div class="vbar"><i style="width:' + pct + '%"></i></div></div>' +
+          '<div class="vc">' + o.v.length + ' 票</div></div>';
+      });
+      h += '<div class="cf"><span class="tag ' + (pass ? 'g' : 'l') + '">' +
+        (pass ? '已过半 · 通过' : '未过半') + '</span>' +
+        '<span style="font-size:10.5px;color:#6f6493">共 ' + total + ' 人，需 ' +
+        (Math.floor(total / 2) + 1) + ' 票</span>' +
+        (sup ? '<span class="mini2" style="margin-left:auto;padding:4px 10px;font-size:10.5px" ' +
+          'data-vote-del="' + v.id + '">删除</span>' : '') +
+        '</div></div>';
+    });
+  }
+  box.innerHTML = h;
+}
+
+/* 法庭：交互 */
+document.addEventListener('click', function (e) {
+  var tg = e.target.closest('[data-law]');
+  if (tg) {
+    LAW_TAB = tg.getAttribute('data-law');
+    document.querySelectorAll('[data-law]').forEach(function (x) {
+      x.classList.toggle('on', x === tg);
+    });
+    renderLaw();
+    return;
+  }
+
+  var ca = e.target.closest('[data-case-add]');
+  if (ca) {
+    askInput('记录一次开庭', [
+      { ph: '原告（谁先说）' },
+      { ph: '被告（谁后说）' },
+      { ph: '事由（发生了什么）' },
+      { ph: '判决（怎么处理）' },
+      { ph: '依据第几条（数字，可空）', type: 'number' }
+    ], function (v) {
+      if (!v[0] || !v[1] || !v[2] || !v[3]) { toast('原告、被告、事由、判决都要填'); return false; }
+      var a = lawList('tg_cases');
+      a.unshift({
+        id: uid('c'), plaintiff: v[0], defendant: v[1], reason: v[2],
+        verdict: v[3], article: v[4], judge: (curUser() || {}).name || 'CZ', t: Date.now()
+      });
+      lawSave('tg_cases', a);
+      renderLaw();
+      pushAct('⚖️', v[0] + ' 告 ' + v[1] + '，已判决');
+      toast('开庭记录已保存');
+    });
+    return;
+  }
+
+  var cd = e.target.closest('[data-case-del]');
+  if (cd) {
+    confirmBox('删掉这条开庭记录？', function () {
+      lawSave('tg_cases', lawList('tg_cases').filter(function (x) {
+        return x.id !== cd.getAttribute('data-case-del');
+      }));
+      renderLaw();
+      toast('已删除');
+    });
+    return;
+  }
+
+  var wa = e.target.closest('[data-warn-add]');
+  if (wa) {
+    askInput('记一次警告', [
+      { ph: '给谁（名字）' },
+      { ph: '程度：1 轻度 / 2 中度 / 3 重度', type: 'number', val: '1' },
+      { ph: '事由' }
+    ], function (v) {
+      if (!v[0] || !v[2]) { toast('名字和事由都要填'); return false; }
+      var lv = v[1] === '3' ? 'h' : (v[1] === '2' ? 'm' : 'l');
+      var a = lawList('tg_warns');
+      a.unshift({ id: uid('w'), who: v[0], level: lv, reason: v[2], t: Date.now() });
+      lawSave('tg_warns', a);
+      renderLaw();
+      pushAct('⚠️', v[0] + ' 收到' + (lv === 'h' ? '重度' : lv === 'm' ? '中度' : '轻度') + '警告');
+      toast('警告已记录');
+    });
+    return;
+  }
+
+  var wd = e.target.closest('[data-warn-del]');
+  if (wd) {
+    confirmBox('删掉这条警告记录？', function () {
+      lawSave('tg_warns', lawList('tg_warns').filter(function (x) {
+        return x.id !== wd.getAttribute('data-warn-del');
+      }));
+      renderLaw();
+      toast('已删除');
+    });
+    return;
+  }
+
+  var va = e.target.closest('[data-vote-add]');
+  if (va) {
+    askInput('发起表决', [
+      { ph: '表决什么？比如：修改第九条' },
+      { ph: '选项一', val: '同意' },
+      { ph: '选项二', val: '不同意' }
+    ], function (v) {
+      if (!v[0]) { toast('先写表决内容'); return false; }
+      var opts = [];
+      if (v[1]) opts.push({ t: v[1], v: [] });
+      if (v[2]) opts.push({ t: v[2], v: [] });
+      if (!opts.length) { toast('至少一个选项'); return false; }
+      var a = lawList('tg_votes');
+      a.unshift({ id: uid('v'), title: v[0], opts: opts, by: (curUser() || {}).name || '有人', t: Date.now() });
+      lawSave('tg_votes', a);
+      renderLaw();
+      pushAct('🗳️', '发起表决：' + v[0]);
+      toast('表决已发起');
+    });
+    return;
+  }
+
+  var vo = e.target.closest('[data-vote-opt]');
+  if (vo) {
+    var p = vo.getAttribute('data-vote-opt').split('|');
+    var vid = p[0], oi = parseInt(p[1], 10);
+    var arr = lawList('tg_votes'), me2 = curUser();
+    arr.forEach(function (v) {
+      if (v.id !== vid) return;
+      v.opts.forEach(function (o) { o.v = o.v.filter(function (x) { return x !== me2.id; }); });
+      if (v.opts[oi]) v.opts[oi].v.push(me2.id);
+    });
+    lawSave('tg_votes', arr);
+    renderLaw();
+    toast('已投票');
+    return;
+  }
+
+  var vd = e.target.closest('[data-vote-del]');
+  if (vd) {
+    confirmBox('删掉这次表决？', function () {
+      lawSave('tg_votes', lawList('tg_votes').filter(function (x) {
+        return x.id !== vd.getAttribute('data-vote-del');
+      }));
+      renderLaw();
+      toast('已删除');
+    });
+    return;
+  }
+});
+
+/* ============================================================
+   天宫广场 + 排行榜 + 成就 + 数据搬家
+   ============================================================ */
+var SQ_TAB = 'feed';
+var MY_MOOD = '';
+var MOODS = [
+  { e: '😊', t: '开心' }, { e: '🎉', t: '好消息' }, { e: '😔', t: '不开心' },
+  { e: '😤', t: '想吐槽' }, { e: '🙏', t: '求帮忙' }, { e: '🍜', t: '吃了啥' }
+];
+
+function posts() { var a = jget('tg_posts', []); return Array.isArray(a) ? a : []; }
+function savePosts(a) { sw('tg_posts', JSON.stringify(a.slice(-120))); }
+
+var ACH = [
+  { id: 'msg1',  i: '💬', n: '开口说话' },
+  { id: 'msg10', i: '🗣️', n: '话痨' },
+  { id: 'doc1',  i: '📄', n: '第一份' },
+  { id: 'doc5',  i: '📚', n: '藏书家' },
+  { id: 'post1', i: '📣', n: '首帖' },
+  { id: 'sign7', i: '📅', n: '连签七天' },
+  { id: 'judge', i: '⚖️', n: '开过庭' },
+  { id: 'lv5',   i: '👑', n: 'Lv.5 长老' }
+];
+
+function myStats() {
+  var u = curUser();
+  if (!u) return { msgs: 0, docs: 0, posts: 0, cases: 0, signDays: 0, exp: 0 };
+  return {
+    msgs: msgs().filter(function (m) { return m.uid === u.id; }).length,
+    docs: DOCS.filter(function (d) { return d.uid === u.id; }).length,
+    posts: posts().filter(function (p) { return p.uid === u.id; }).length,
+    cases: jget('tg_cases', []).length,
+    signDays: u.signDays || 0,
+    exp: u.exp || 0
+  };
+}
+function achGot(s) {
+  return {
+    msg1: s.msgs >= 1, msg10: s.msgs >= 10,
+    doc1: s.docs >= 1, doc5: s.docs >= 5,
+    post1: s.posts >= 1, sign7: s.signDays >= 7,
+    judge: s.cases >= 1, lv5: lvOf(s.exp).lv >= 5
+  };
+}
+function checkAch(silent) {
+  var u = curUser();
+  if (!u) return;
+  var s = myStats();
+  var got = achGot(s);
+  var key = 'tg_ach_' + u.id;
+  var old = jget(key, []);
+  var newly = [];
+  ACH.forEach(function (a) {
+    if (got[a.id] && old.indexOf(a.id) < 0) { newly.push(a); old.push(a.id); }
+  });
+  if (newly.length) {
+    sw(key, JSON.stringify(old));
+    if (!silent) {
+      toast('🎖️ 达成成就：' + newly.map(function (a) { return a.n; }).join('、'));
+    }
+  }
+}
+
+function renderMoods() {
+  var box = document.getElementById('moodRow');
+  if (!box) return;
+  var h = '';
+  MOODS.forEach(function (m) {
+    h += '<span class="mini2" data-mood="' + m.e + '" style="' +
+      (MY_MOOD === m.e ? 'background:rgba(232,200,106,.3);border-color:rgba(232,200,106,.6)' : '') +
+      '">' + m.e + ' ' + m.t + '</span>';
+  });
+  box.innerHTML = h;
+}
+
+function renderSquare() {
+  var box = document.getElementById('sqBody');
+  if (!box) return;
+  var me = curUser();
+  var h = '';
+
+  if (SQ_TAB === 'feed') {
+    var ps = posts();
+    var cc = document.getElementById('sqCount');
+    if (cc) cc.textContent = ps.length + ' 条';
+    if (!ps.length) {
+      h = '<div class="empty">广场还空着<br>在下面发第一条吧</div>';
+    }
+    ps.slice().reverse().forEach(function (p) {
+      var liked = p.likes && p.likes.indexOf(me.id) >= 0;
+      h += '<div class="post">' +
+        '<div class="ph"><div class="pa">' + esc((p.name || '?').slice(0, 1)) + '</div>' +
+        '<div class="pn"><b>' + esc(p.name) +
+          (p.sup ? '<span class="crown">超管</span>' : '') + '</b>' +
+        '<span>' + fmtTime(p.t) + '</span></div></div>';
+      if (p.mood) h += '<div class="pm">' + esc(p.mood) + '</div>';
+      h += '<div class="pt">' + esc(p.text) + '</div>';
+      if (p.comments && p.comments.length) {
+        p.comments.forEach(function (c) {
+          h += '<div class="pcom"><b>' + esc(c.name) + '</b>：' + esc(c.text) + '</div>';
+        });
+      }
+      h += '<div class="pf">' +
+        '<span class="' + (liked ? 'on' : '') + '" data-like="' + p.id + '">' +
+          (liked ? '❤️' : '🤍') + ' ' + ((p.likes || []).length) + '</span>' +
+        '<span data-comment="' + p.id + '">💬 ' + ((p.comments || []).length) + '</span>' +
+        (p.uid === me.id ? '<span class="del" data-postdel="' + p.id + '">删除</span>' : '') +
+        '</div></div>';
+    });
+  } else if (SQ_TAB === 'rank') {
+    var us = users().slice().sort(function (a, b) { return (b.exp || 0) - (a.exp || 0); });
+    var medal = ['🥇', '🥈', '🥉'];
+    us.forEach(function (x, i) {
+      h += '<div class="rank' + (x.id === me.id ? ' me' : '') + '">' +
+        '<div class="ri">' + (medal[i] || (i + 1)) + '</div>' +
+        '<div class="ra">' + esc((x.name || '?').slice(0, 1)) + '</div>' +
+        '<div class="rn"><b>' + esc(x.name) +
+          (x.role === 'super' ? '<span class="crown">超管</span>' : '') + '</b>' +
+        '<span>Lv.' + lvOf(x.exp || 0).lv + ' ' + lvOf(x.exp || 0).name + '</span></div>' +
+        '<div class="rv">' + (x.exp || 0) + '</div></div>';
+    });
+  } else {
+    var st = myStats();
+    var got = achGot(st);
+    var n = 0;
+    h += '<div class="ach">';
+    ACH.forEach(function (a) {
+      if (got[a.id]) n++;
+      h += '<div class="' + (got[a.id] ? 'got' : '') + '"><i>' + a.i + '</i>' +
+        '<span>' + a.n + '</span></div>';
+    });
+    h += '</div>';
+    h += '<div style="font-size:11px;color:#8a7fb0;margin-top:12px;line-height:1.9">' +
+      '已解锁 ' + n + ' / 8。发消息、传文档、发帖、签到、开庭都能解锁。</div>';
+    var ac = document.getElementById('achCount');
+    if (ac) ac.textContent = n + ' / 8';
+  }
+  box.innerHTML = h;
+
+  var ac2 = document.getElementById('achCount');
+  if (ac2 && SQ_TAB !== 'ach') {
+    var g2 = achGot(myStats()), c2 = 0;
+    ACH.forEach(function (a) { if (g2[a.id]) c2++; });
+    ac2.textContent = c2 + ' / 8';
+  }
+}
+
+/* 广场交互 */
+document.addEventListener('click', function (e) {
+  var sg = e.target.closest('[data-sq]');
+  if (sg) {
+    SQ_TAB = sg.getAttribute('data-sq');
+    document.querySelectorAll('[data-sq]').forEach(function (x) {
+      x.classList.toggle('on', x === sg);
+    });
+    renderSquare();
+    return;
+  }
+
+  var mo = e.target.closest('[data-mood]');
+  if (mo) {
+    MY_MOOD = mo.getAttribute('data-mood');
+    renderMoods();
+    return;
+  }
+
+  var lk = e.target.closest('[data-like]');
+  if (lk) {
+    var pid = lk.getAttribute('data-like'), me = curUser();
+    var arr = posts();
+    arr.forEach(function (p) {
+      if (p.id !== pid) return;
+      p.likes = p.likes || [];
+      var i = p.likes.indexOf(me.id);
+      if (i >= 0) p.likes.splice(i, 1);
+      else p.likes.push(me.id);
+    });
+    savePosts(arr);
+    renderSquare();
+    return;
+  }
+
+  var cm = e.target.closest('[data-comment]');
+  if (cm) {
+    var cid = cm.getAttribute('data-comment');
+    askInput('写评论', [{ ph: '说点什么' }], function (v) {
+      if (!v[0]) return false;
+      var me2 = curUser();
+      var a2 = posts();
+      a2.forEach(function (p) {
+        if (p.id !== cid) return;
+        p.comments = p.comments || [];
+        p.comments.push({ uid: me2.id, name: me2.name, text: v[0], t: Date.now() });
+      });
+      savePosts(a2);
+      renderSquare();
+      toast('评论成功');
+    });
+    return;
+  }
+
+  var pd = e.target.closest('[data-postdel]');
+  if (pd) {
+    var did = pd.getAttribute('data-postdel');
+    confirmBox('删掉这条？', function () {
+      savePosts(posts().filter(function (p) { return p.id !== did; }));
+      renderSquare();
+      toast('已删除');
+    });
+    return;
+  }
+});
+
+document.getElementById('btnPost').onclick = function () {
+  var inp = document.getElementById('postIn');
+  var txt = (inp.value || '').trim();
+  if (!txt) { toast('还没写内容'); return; }
+  var u = curUser();
+  var arr = posts();
+  arr.push({
+    id: uid('p'), uid: u.id, name: u.name, sup: u.role === 'super',
+    text: txt, mood: MY_MOOD, t: Date.now(), likes: [], comments: []
+  });
+  savePosts(arr);
+  inp.value = '';
+  MY_MOOD = '';
+  renderMoods();
+  addExp(5);
+  pushAct('📣', u.name + ' 发了一条：' + (txt.length > 12 ? txt.slice(0, 12) + '…' : txt));
+  renderSquare();
+  checkAch();
+  toast('发布成功 +5 经验');
+};
+
+/* 数据搬家 */
+function packAll() {
+  var u = curUser();
+  if (!u) return '';
+  var obj = {
+    v: 1, user: u, msgs: msgs(), posts: posts(),
+    cases: jget('tg_cases', []), warns: jget('tg_warns', []),
+    votes: jget('tg_votes', []), acts: jget('tg_acts', []),
+    ach: jget('tg_ach_' + u.id, []), cfg: jget('tg_cfg', {})
+  };
+  try { return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
+  catch (e) { return ''; }
+}
+function unpackAll(code) {
+  var c = String(code || '').replace(/\s+/g, '');
+  if (!c) throw new Error('没有内容');
+  var json = '';
+  try { json = decodeURIComponent(escape(atob(c))); }
+  catch (e) { throw new Error('这串码不完整'); }
+  var o = null;
+  try { o = JSON.parse(json); } catch (e2) { throw new Error('码坏了'); }
+  if (!o || !o.user) throw new Error('不是天宫的搬家码');
+  return o;
+}
+
+document.getElementById('btnPack').onclick = function () {
+  var code = packAll();
+  if (!code) { toast('生成失败'); return; }
+  copyText(code);
+  askInput('搬家码（已复制）', [{ ph: '搬家码', val: code }], function () { return true; });
+};
+
+document.getElementById('btnUnpack').onclick = function () {
+  askInput('粘贴搬家码', [{ ph: '把搬家码粘到这里' }], function (v) {
+    try {
+      var o = unpackAll(v[0]);
+      var arr = users();
+      var old = o.user;
+      var exist = null;
+      arr.forEach(function (x) { if (x.id === old.id) exist = x; });
+      if (exist) {
+        old.role = exist.role;
+        for (var i = 0; i < arr.length; i++) if (arr[i].id === old.id) arr[i] = old;
+      } else {
+        old.role = arr.length === 0 ? 'super' : 'member';
+        arr.push(old);
+      }
+      saveUsers(arr);
+      sw(K_SESS, old.id);
+      UID = old.id;
+      if (o.msgs) saveMsgs(o.msgs);
+      if (o.posts) savePosts(o.posts);
+      if (o.cases) lawSave('tg_cases', o.cases);
+      if (o.warns) lawSave('tg_warns', o.warns);
+      if (o.votes) lawSave('tg_votes', o.votes);
+      if (o.acts) sw('tg_acts', JSON.stringify(o.acts));
+      if (o.ach) sw('tg_ach_' + old.id, JSON.stringify(o.ach));
+      if (o.cfg) sw('tg_cfg', JSON.stringify(o.cfg));
+      renderAll(); loadDocs();
+      toast('搬家完成，积分、帖子、法庭记录都回来了');
+      goTab('Home');
+    } catch (e) { toast(e.message); }
+    return true;
+  });
+};
+
+/* ============================================================
+   超级管理员
+   ============================================================ */
+var ipCb = null;
+function askInput(title, fields, cb) {
+  document.getElementById('ipTitle').textContent = title;
+  var h = '';
+  fields.forEach(function (f, i) {
+    var v = (f.val === undefined ? '' : String(f.val)).replace(/"/g, '&quot;');
+    h += '<input class="gin" id="ipf' + i + '" placeholder="' + f.ph + '" value="' + v + '" ' +
+      (f.type === 'number' ? 'inputmode="numeric"' : '') + '>';
+  });
+  document.getElementById('ipFields').innerHTML = h;
+  ipCb = function () {
+    return fields.map(function (f, i) {
+      return (document.getElementById('ipf' + i).value || '').trim();
+    });
+  };
+  window.__ipSave = cb;
+  document.getElementById('mInput').classList.add('on');
+  setTimeout(function () { var a = document.getElementById('ipf0'); if (a) a.focus(); }, 120);
+}
+document.getElementById('ipCancel').onclick = function () {
+  document.getElementById('mInput').classList.remove('on');
+};
+document.getElementById('ipOk').onclick = function () {
+  var v = ipCb ? ipCb() : [];
+  var r = window.__ipSave ? window.__ipSave(v) : true;
+  if (r !== false) document.getElementById('mInput').classList.remove('on');
+};
+
+function openAdmin() {
+  var u = curUser();
+  if (!u || u.role !== 'super') { toast('只有超级管理员能进'); return; }
+  document.getElementById('mbTitle').textContent = '👑 天宫管理';
+  document.getElementById('mBox').classList.add('on');
+  renderAdminPanel();
+}
+
+function renderAdminPanel() {
+  var me = curUser();
+  var us = users().slice().sort(function (a, b) { return (a.joined || 0) - (b.joined || 0); });
+  var cfg = jget('tg_cfg', {});
+  var h = '';
+
+  h += '<div class="adm-sec">👥 成员 · ' + us.length + ' 人</div>';
+  us.forEach(function (x) {
+    h += '<div class="adm-row">' +
+      '<div class="aa">' + esc((x.name || '?').slice(0, 1)) + '</div>' +
+      '<div class="am"><b>' + esc(x.name) +
+        (x.role === 'super' ? '<span class="crown">超管</span>' : '') + '</b>' +
+      '<span>Lv.' + lvOf(x.exp || 0).lv + ' · ' + (x.exp || 0) + ' 经验' +
+        (x.inviter ? ' · 由 ' + esc(x.inviter) + ' 邀请' : '') + '</span></div>' +
+      '<div class="ab" data-adm-edit="' + x.id + '">✏️</div>' +
+      (x.id === me.id ? '' : '<div class="ab" data-adm-del="' + x.id + '">🗑</div>') +
+      '</div>';
+  });
+
+  h += '<div class="adm-sec">📯 首页公告</div>';
+  h += '<div style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:10px;' +
+    'white-space:pre-line">' + esc(cfg.notice || '（还没设置，用默认的）') + '</div>';
+  h += '<button class="mini2" data-adm-notice="1">✏️ 修改公告</button>';
+
+  h += '<div class="adm-sec">💬 聊天 · ' + msgs().length + ' 条</div>';
+  h += '<button class="mini2 danger" data-adm-clearmsg="1">清空所有聊天</button>';
+
+  h += '<div class="adm-sec">📁 文档 · ' + DOCS.length + ' 个</div>';
+  if (!DOCS.length) {
+    h += '<div style="font-size:11.5px;color:#6f6493;margin-bottom:8px">还没有文档</div>';
+  }
+  DOCS.forEach(function (d) {
+    h += '<div class="adm-row">' +
+      '<div class="aa" style="background:rgba(232,200,106,.13)">' + docIcon(d.name, d.type) + '</div>' +
+      '<div class="am"><b>' + esc(d.name) + '</b><span>' + fmtSize(d.size) + ' · ' +
+        esc(d.uname) + ' · ' + fmtTime(d.t) + '</span></div>' +
+      '<div class="ab" data-adm-docdel="' + d.id + '">🗑</div></div>';
+  });
+
+  document.getElementById('mbBody').innerHTML = h;
+}
+
+function editMember(id) {
+  var arr = users(), m = null;
+  arr.forEach(function (x) { if (x.id === id) m = x; });
+  if (!m) return;
+  askInput('修改成员', [
+    { ph: '名字', val: m.name },
+    { ph: '经验值', val: m.exp || 0, type: 'number' },
+    { ph: '超管：填 1 是，填 0 不是', val: m.role === 'super' ? '1' : '0', type: 'number' }
+  ], function (v) {
+    if (!v[0]) { toast('名字不能空'); return false; }
+    var dup = arr.some(function (x) { return x.id !== id && x.name === v[0]; });
+    if (dup) { toast('已经有同名的人了'); return false; }
+    m.name = v[0];
+    m.exp = Math.max(0, parseInt(v[1], 10) || 0);
+    var wantSuper = v[2] === '1';
+    if (wantSuper) {
+      arr.forEach(function (x) { x.role = 'member'; });
+      m.role = 'super';
+    } else if (m.role === 'super') {
+      var rest = arr.filter(function (x) { return x.id !== id; })
+        .sort(function (a, b) { return (a.joined || 0) - (b.joined || 0); });
+      m.role = 'member';
+      if (rest.length) rest[0].role = 'super';
+    }
+    saveUsers(arr);
+    renderAll(); renderAdminPanel();
+    toast('改好了');
+  });
+}
+
+document.getElementById('btnAdmin').onclick = openAdmin;
+
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('[data-adm-edit]');
+  if (a) { editMember(a.getAttribute('data-adm-edit')); return; }
+
+  var b = e.target.closest('[data-adm-del]');
+  if (b) {
+    var id = b.getAttribute('data-adm-del');
+    if (id === UID) { toast('不能删自己'); return; }
+    var who = '';
+    users().forEach(function (x) { if (x.id === id) who = x.name; });
+    confirmBox('把「' + who + '」从天宫除名？他发过的消息会保留。', function () {
+      saveUsers(users().filter(function (x) { return x.id !== id; }));
+      ensureSuper();
+      renderAdminPanel(); renderAll();
+      toast('已除名');
+    });
+    return;
+  }
+
+  var c = e.target.closest('[data-adm-notice]');
+  if (c) {
+    var cfg = jget('tg_cfg', {});
+    askInput('修改首页公告', [{ ph: '公告内容', val: cfg.notice || '' }], function (v) {
+      cfg.notice = v[0];
+      sw('tg_cfg', JSON.stringify(cfg));
+      renderAll(); renderAdminPanel();
+      toast('公告改好了');
+    });
+    return;
+  }
+
+  var d = e.target.closest('[data-adm-clearmsg]');
+  if (d) {
+    confirmBox('清空所有聊天记录？删了就找不回来了。', function () {
+      saveMsgs([]);
+      renderMsgs(); renderAdminPanel();
+      toast('聊天已清空');
+    });
+    return;
+  }
+
+  var f = e.target.closest('[data-adm-docdel]');
+  if (f) {
+    var did = f.getAttribute('data-adm-docdel');
+    confirmBox('删掉这个文档？', function () {
+      idbDel(did).then(function () {
+        loadDocs();
+        setTimeout(renderAdminPanel, 400);
+        toast('已删除');
+      });
+    });
+    return;
+  }
+});
+
+/* ============================================================
+   启动
+   ============================================================ */
+function ensureSuper() {
+  var arr = users();
+  if (!arr.length) return;
+  var has = arr.some(function (x) { return x.role === 'super'; });
+  if (!has) {
+    arr.sort(function (a, b) { return (a.joined || 0) - (b.joined || 0); });
+    arr.forEach(function (x) { x.role = 'member'; });
+    arr[0].role = 'super';
+    saveUsers(arr);
+  }
+}
+
+function showFromBar() {
+  var fb = document.getElementById('fromBar');
+  if (!fb) return;
+  if (FROM && !curUser()) {
+    fb.style.display = '';
+    fb.innerHTML = '🌟 <b>' + esc(FROM) + '</b> 邀请你来天宫';
+  } else {
+    fb.style.display = 'none';
+  }
+}
+
+function boot() {
+  ensureSuper();
+  showFromBar();
+  var u = curUser();
+  if (!UID || !u) {
+    document.getElementById('gate').classList.remove('off');
+    document.getElementById('app').classList.remove('on');
+    return;
+  }
+  document.getElementById('gate').classList.add('off');
+  document.getElementById('app').classList.add('on');
+  renderAll();
+  loadDocs();
+}
+
+boot();
+</script>
+</body>
+</html>
