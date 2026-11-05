@@ -1,5 +1,5 @@
 /* 天宫 service worker：网络优先，断网时用缓存兜底 */
-var CACHE = 'tiangong-v1';
+var CACHE = 'tiangong-v2';
 var ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
