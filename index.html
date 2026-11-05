@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#120c28">
 <title>天宫</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="天宫">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -24,6 +31,16 @@ body{
 }
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,textarea,select{font-family:inherit}
+
+/* 首屏 */
+#bootMask{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;
+  background:#0d0820;transition:opacity .45s ease,visibility .45s}
+#bootMask.off{opacity:0;visibility:hidden;pointer-events:none}
+#bootMask .bmL{font-size:52px;animation:bmp 1.4s ease-in-out infinite}
+#bootMask .bmT{font-size:15px;letter-spacing:8px;color:#e8c86a;font-weight:800;text-indent:8px}
+@keyframes bmp{0%,100%{transform:translateY(0) scale(1);opacity:.85}
+  50%{transform:translateY(-8px) scale(1.06);opacity:1}}
 
 /* ---------- 登录 ---------- */
 #gate{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
@@ -275,6 +292,9 @@ input,textarea,select{font-family:inherit}
 .post .pf span{font-size:11px;color:#8a7fb0;display:flex;align-items:center;gap:4px}
 .post .pf span.on{color:var(--gold)}
 .post .pf .del{margin-left:auto;color:#8a5a5a}
+.pimg{width:100%;border-radius:12px;margin-top:9px;display:block;background:rgba(0,0,0,.2)}
+.pimg[src=""]{min-height:120px}
+
 .pcom{background:rgba(0,0,0,.22);border-radius:10px;padding:9px 11px;margin-top:8px;
   font-size:11.5px;line-height:1.7;color:#b9afd6}
 .pcom b{color:var(--gold2);font-weight:700}
@@ -377,6 +397,8 @@ input,textarea,select{font-family:inherit}
 </head>
 <body>
 
+<div id="bootMask"><div class="bmL">🏯</div><div class="bmT">天 宫</div></div>
+
 <!-- ================= 登录 ================= -->
 <div id="gate">
   <div class="stars"></div>
@@ -401,6 +423,7 @@ input,textarea,select{font-family:inherit}
       <h1 id="hdTitle">天 宫</h1>
       <p id="hdSub">天宫小队 · 内部空间</p>
     </div>
+    <button class="ico" id="btnSearch">🔍</button>
     <button class="ico" id="btnMe">👤</button>
   </div>
 
@@ -478,6 +501,11 @@ input,textarea,select{font-family:inherit}
         style="width:100%;height:88px;padding:12px;border-radius:13px;resize:none;
         border:1px solid rgba(232,200,106,.20);background:rgba(255,255,255,.05);
         color:var(--txt);font-size:14px;outline:none;line-height:1.6"></textarea>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:9px">
+        <button class="mini2" id="btnPickImg">📷 加图片</button>
+        <span id="imgHint" style="font-size:11px;color:#6f6493">可以不选</span>
+      </div>
+      <input type="file" id="pimgIn" accept="image/*" style="display:none">
       <button class="btn" id="btnPost" style="margin-top:10px">发 出 去</button>
     </div>
   </div>
@@ -619,6 +647,15 @@ input,textarea,select{font-family:inherit}
       <button class="mini2" id="ipCancel" style="flex:1;padding:12px">取消</button>
       <button class="ok" id="ipOk" style="flex:1;margin:0">确 定</button>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="mSearch">
+  <div class="sheet">
+    <h3>🔍 搜一搜</h3>
+    <input class="srch" id="srIn" placeholder="聊天、帖子、文档名都能搜" style="margin-top:4px">
+    <div id="srRes" style="max-height:52vh;overflow-y:auto"></div>
+    <button class="mini2" id="srClose" style="width:100%;padding:12px;margin-top:10px">关 闭</button>
   </div>
 </div>
 
@@ -954,8 +991,18 @@ function renderMsgs() {
   var us = users();
   var superMap = {};
   us.forEach(function (x) { if (x.role === 'super') superMap[x.id] = 1; });
+  var lastDay = '';
   list.forEach(function (m) {
     var me = m.uid === u.id;
+    var dd = new Date(m.t);
+    var day = dd.getFullYear() + '-' + pad2(dd.getMonth() + 1) + '-' + pad2(dd.getDate());
+    if (day !== lastDay) {
+      lastDay = day;
+      var tt = (day === todayStr()) ? '今天'
+        : (dd.getMonth() + 1) + ' 月 ' + dd.getDate() + ' 日';
+      h += '<div style="text-align:center;font-size:10px;color:#6f6493;' +
+        'margin:14px 0 12px;letter-spacing:1px">— ' + tt + ' —</div>';
+    }
     h += '<div class="m ' + (me ? 'me' : 'other') + '">' +
       '<div class="av">' + esc(m.name.slice(0, 1)) + '</div>' +
       '<div class="mb"><div class="mn">' + esc(m.name) +
@@ -1022,10 +1069,11 @@ var idbP = null;
 function idb() {
   if (idbP) return idbP;
   idbP = new Promise(function (res, rej) {
-    var req = indexedDB.open('tiangong', 1);
+    var req = indexedDB.open('tiangong', 2);
     req.onupgradeneeded = function (e) {
       var db = e.target.result;
       if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('imgs')) db.createObjectStore('imgs', { keyPath: 'id' });
     };
     req.onsuccess = function (e) { res(e.target.result); };
     req.onerror = function (e) { rej(e); };
@@ -1057,6 +1105,25 @@ function idbDel(id) {
       var tx = db.transaction('docs', 'readwrite');
       tx.objectStore('docs').delete(id);
       tx.oncomplete = res; tx.onerror = rej;
+    });
+  });
+}
+function idbPutImg(o) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('imgs', 'readwrite');
+      tx.objectStore('imgs').put(o);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  });
+}
+function idbGetImg(id) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('imgs', 'readonly');
+      var r = tx.objectStore('imgs').get(id);
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = rej;
     });
   });
 }
@@ -1674,6 +1741,7 @@ function renderMoods() {
 function renderSquare() {
   var box = document.getElementById('sqBody');
   if (!box) return;
+  var keepY = window.scrollY || document.documentElement.scrollTop || 0;
   var me = curUser();
   var h = '';
 
@@ -1692,7 +1760,8 @@ function renderSquare() {
           (p.sup ? '<span class="crown">超管</span>' : '') + '</b>' +
         '<span>' + fmtTime(p.t) + '</span></div></div>';
       if (p.mood) h += '<div class="pm">' + esc(p.mood) + '</div>';
-      h += '<div class="pt">' + esc(p.text) + '</div>';
+      if (p.text) h += '<div class="pt">' + esc(p.text) + '</div>';
+      if (p.imgId) h += '<img class="pimg" data-img="' + p.imgId + '" alt="图片">';
       if (p.comments && p.comments.length) {
         p.comments.forEach(function (c) {
           h += '<div class="pcom"><b>' + esc(c.name) + '</b>：' + esc(c.text) + '</div>';
@@ -1734,6 +1803,22 @@ function renderSquare() {
     if (ac) ac.textContent = n + ' / 8';
   }
   box.innerHTML = h;
+
+  try { window.scrollTo(0, keepY); } catch (e) {}
+
+  setTimeout(function () {
+    var ims = box.querySelectorAll('[data-img]');
+    for (var i = 0; i < ims.length; i++) {
+      (function (im) {
+        if (im.getAttribute('src')) return;
+        idbGetImg(im.getAttribute('data-img')).then(function (o) {
+          if (o && o.blob) {
+            try { im.src = URL.createObjectURL(o.blob); } catch (e) {}
+          }
+        }).catch(function () {});
+      })(ims[i]);
+    }
+  }, 0);
 
   var ac2 = document.getElementById('achCount');
   if (ac2 && SQ_TAB !== 'ach') {
@@ -1812,16 +1897,20 @@ document.addEventListener('click', function (e) {
 document.getElementById('btnPost').onclick = function () {
   var inp = document.getElementById('postIn');
   var txt = (inp.value || '').trim();
-  if (!txt) { toast('还没写内容'); return; }
+  if (!txt && !PENDING_IMG) { toast('写点什么，或者加张图'); return; }
   var u = curUser();
   var arr = posts();
   arr.push({
     id: uid('p'), uid: u.id, name: u.name, sup: u.role === 'super',
-    text: txt, mood: MY_MOOD, t: Date.now(), likes: [], comments: []
+    text: txt, mood: MY_MOOD, t: Date.now(), likes: [], comments: [],
+    imgId: PENDING_IMG || ''
   });
   savePosts(arr);
   inp.value = '';
   MY_MOOD = '';
+  PENDING_IMG = null;
+  var ih = document.getElementById('imgHint');
+  if (ih) { ih.textContent = '可以不选'; ih.style.color = '#6f6493'; }
   renderMoods();
   addExp(5);
   pushAct('📣', u.name + ' 发了一条：' + (txt.length > 12 ? txt.slice(0, 12) + '…' : txt));
@@ -1893,6 +1982,117 @@ document.getElementById('btnUnpack').onclick = function () {
       goTab('Home');
     } catch (e) { toast(e.message); }
     return true;
+  });
+};
+
+/* ============================================================
+   搜索
+   ============================================================ */
+function doSearch(raw) {
+  var box = document.getElementById('srRes');
+  var kw = String(raw || '').trim().toLowerCase();
+  if (!kw) { box.innerHTML = '<div class="empty" style="padding:22px 0">输入关键词开始搜</div>'; return; }
+  var res = [];
+
+  msgs().forEach(function (m) {
+    if ((m.text || '').toLowerCase().indexOf(kw) >= 0) {
+      res.push({ i: '💬', t: m.text, s: m.name + ' · ' + fmtTime(m.t) });
+    }
+  });
+  posts().forEach(function (p) {
+    if ((p.text || '').toLowerCase().indexOf(kw) >= 0) {
+      res.push({ i: '📣', t: p.text, s: p.name + ' · ' + fmtTime(p.t) });
+    }
+  });
+  DOCS.forEach(function (d) {
+    if ((d.name || '').toLowerCase().indexOf(kw) >= 0) {
+      res.push({ i: '📁', t: d.name, s: fmtSize(d.size) + ' · ' + d.uname });
+    }
+  });
+
+  if (!res.length) {
+    box.innerHTML = '<div class="empty" style="padding:22px 0">没找到「' + esc(kw) + '」</div>';
+    return;
+  }
+  var h = '<div style="font-size:10.5px;color:#6f6493;margin-bottom:8px">找到 ' + res.length + ' 条</div>';
+  res.slice(0, 40).forEach(function (r) {
+    h += '<div style="display:flex;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
+      '<span style="font-size:14px;flex-shrink:0">' + r.i + '</span>' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-size:12px;color:#ddd6f5;line-height:1.6;word-break:break-word">' +
+      esc(r.t).slice(0, 120) + '</div>' +
+      '<div style="font-size:10px;color:#6f6493">' + esc(r.s) + '</div></div></div>';
+  });
+  box.innerHTML = h;
+}
+
+document.getElementById('btnSearch').onclick = function () {
+  document.getElementById('srIn').value = '';
+  document.getElementById('srRes').innerHTML =
+    '<div class="empty" style="padding:22px 0">输入关键词开始搜</div>';
+  document.getElementById('mSearch').classList.add('on');
+  setTimeout(function () {
+    var i = document.getElementById('srIn');
+    if (i) i.focus();
+  }, 150);
+};
+document.getElementById('srIn').addEventListener('input', function (e) {
+  doSearch(e.target.value);
+});
+document.getElementById('srClose').onclick = function () {
+  document.getElementById('mSearch').classList.remove('on');
+};
+
+/* ============================================================
+   广场发图
+   ============================================================ */
+var PENDING_IMG = null;
+
+function compressImg(file, cb) {
+  var img = new Image();
+  var url = URL.createObjectURL(file);
+  img.onload = function () {
+    var maxW = 900;
+    var w = img.width, h = img.height;
+    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+    var cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    var ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    try { URL.revokeObjectURL(url); } catch (e) {}
+    if (cv.toBlob) {
+      cv.toBlob(function (b) { cb(b); }, 'image/jpeg', 0.72);
+    } else {
+      cb(null);
+    }
+  };
+  img.onerror = function () {
+    try { URL.revokeObjectURL(url); } catch (e) {}
+    cb(null);
+  };
+  img.src = url;
+}
+
+document.getElementById('btnPickImg').onclick = function () {
+  document.getElementById('pimgIn').click();
+};
+document.getElementById('pimgIn').onchange = function (e) {
+  var f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  toast('正在处理图片…');
+  compressImg(f, function (b) {
+    if (!b) { toast('这张图打不开'); return; }
+    var id = uid('i');
+    idbPutImg({ id: id, blob: b, t: Date.now() }).then(function () {
+      PENDING_IMG = id;
+      var hint = document.getElementById('imgHint');
+      hint.textContent = '已选 1 张图 ✓';
+      hint.style.color = '#9bf0b4';
+      toast('图片加好了');
+    }).catch(function () {
+      toast('图片存不下，空间可能满了');
+    });
   });
 };
 
@@ -2105,7 +2305,24 @@ function boot() {
   loadDocs();
 }
 
+/* 首屏遮罩收起 */
+function hideBoot() {
+  var bm = document.getElementById('bootMask');
+  if (!bm) return;
+  setTimeout(function () { bm.classList.add('off'); }, 120);
+}
+
+/* 注册 service worker（离线 / 添加到主屏幕） */
+try {
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+} catch (e) {}
+
 boot();
+hideBoot();
 </script>
 </body>
 </html>
