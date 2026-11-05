@@ -86,6 +86,23 @@ input,textarea,select{font-family:inherit}
   background:linear-gradient(135deg,#f5e3a8,#e8c86a 50%,#c9a548);color:#2a1d05;
   box-shadow:0 10px 26px rgba(232,200,106,.28);transition:.15s}
 .gbtn:active{transform:scale(.97)}
+.acctitle{font-size:10px;color:#6f6493;letter-spacing:1px;margin-bottom:9px;text-align:left}
+.accrow{display:flex;gap:11px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px}
+.accrow::-webkit-scrollbar{height:0}
+.acc{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;width:56px}
+.acc .accAv{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  font-size:19px;font-weight:800;color:#2a1d05;
+  background:linear-gradient(145deg,#f5e3a8,#d9b955);
+  box-shadow:0 4px 12px rgba(232,200,106,.25);transition:.15s;border:2px solid transparent}
+.acc:active .accAv{transform:scale(.92)}
+.acc span{font-size:10px;color:#9d92c4;max-width:56px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.acc.cur .accAv{border-color:#e8c86a;box-shadow:0 0 0 3px rgba(232,200,106,.22)}
+
+.glinks{display:flex;justify-content:center;gap:18px;margin-top:14px}
+.glinks span{font-size:11.5px;color:#8a7fb0;padding:4px 2px}
+.glinks span:active{color:#e8c86a}
+
 .gtip{font-size:10.5px;color:#6f6493;margin-top:14px;line-height:1.8}
 .gtip b{color:var(--gold)}
 
@@ -174,6 +191,7 @@ input,textarea,select{font-family:inherit}
 .chat-bar button{padding:0 20px;border-radius:13px;font-size:14px;font-weight:800;
   background:linear-gradient(135deg,#f5e3a8,#e8c86a);color:#2a1d05;flex-shrink:0}
 .chat-bar button:active{transform:scale(.95)}
+.chat-bar button:disabled{opacity:.4;box-shadow:none}
 .empty{text-align:center;color:#6f6493;font-size:12px;padding:34px 10px;line-height:1.9}
 
 /* 管理 */
@@ -219,6 +237,12 @@ input,textarea,select{font-family:inherit}
   font-size:13px;color:#a89ec9;flex-shrink:0;background:rgba(255,255,255,.05)}
 
 /* 我的 */
+.avgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:4px}
+.avgrid span{font-size:22px;height:44px;display:grid;place-items:center;
+  background:rgba(255,255,255,.05);border-radius:12px;transition:.15s}
+.avgrid span:active{transform:scale(.9);background:rgba(232,200,106,.2)}
+.avgrid span.on{background:rgba(232,200,106,.25);box-shadow:0 0 0 2px rgba(232,200,106,.5)}
+
 .me-hero{text-align:center;padding:26px 16px 22px}
 .avatar{width:76px;height:76px;border-radius:24px;margin:0 auto 13px;display:grid;
   place-items:center;font-size:32px;font-weight:900;color:#2a1d05;
@@ -407,10 +431,17 @@ input,textarea,select{font-family:inherit}
     <h1>天 宫</h1>
     <p class="gsub">天 宫 小 队</p>
     <div class="frombar" id="fromBar" style="display:none"></div>
+    <div id="gAccWrap" style="display:none">
+      <div class="acctitle">这台设备上的账号</div>
+      <div class="accrow" id="gAccRow"></div>
+    </div>
     <input class="gin" id="gName" placeholder="你的名字" autocomplete="off">
     <input class="gin" id="gPass" type="password" placeholder="密码">
     <input class="gin gcode" id="gCode" placeholder="邀请码" inputmode="numeric" maxlength="8" autocomplete="off">
     <button class="gbtn" id="gBtn">入 内</button>
+    <div class="glinks">
+      <span id="gForgot">忘记密码？</span>
+    </div>
     <p class="gtip" id="gTip">需要邀请码才能进入<br>第一次来会自动登记</p>
   </div>
 </div>
@@ -459,6 +490,16 @@ input,textarea,select{font-family:inherit}
           <div class="qi">📁</div>
           <b>传文档</b>
           <span>txt / PPT / PDF</span>
+        </div>
+        <div class="qbtn" data-go="Square">
+          <div class="qi">📣</div>
+          <b>逛广场</b>
+          <span>看看大家发了啥</span>
+        </div>
+        <div class="qbtn" data-go="Law">
+          <div class="qi">⚖️</div>
+          <b>天宫法庭</b>
+          <span>开庭 / 警告 / 表决</span>
         </div>
       </div>
     </div>
@@ -552,6 +593,7 @@ input,textarea,select{font-family:inherit}
     <div class="card">
       <div class="me-hero">
         <div class="avatar" id="meAv">C</div>
+        <button class="mini2" id="btnAvatar" style="margin-bottom:11px;padding:6px 14px;font-size:11px">换个头像</button>
         <h2 id="meName">—</h2>
         <div class="mt2" id="meLvText">Lv.1 · 天宫新人</div>
         <div class="lvrow" style="margin-top:14px;padding:0 4px">
@@ -575,7 +617,7 @@ input,textarea,select{font-family:inherit}
     </div>
 
     <div class="card">
-      <div class="card-h"><b>🎖️ 我的成就</b><span id="achCount">0 / 8</span></div>
+      <div class="card-h"><b>🎖️ 我的成就</b><span id="achCount">0 / 12</span></div>
       <div class="ach" id="achBox"></div>
     </div>
 
@@ -618,6 +660,10 @@ input,textarea,select{font-family:inherit}
       </div>
       <button class="btn ghost" id="btnLogout" style="margin-bottom:10px">退出登录</button>
       <button class="btn ghost" id="btnReset" style="color:#e88">清空本机天宫数据</button>
+      <div style="text-align:center;margin-top:16px;font-size:10.5px;color:#5f5680;line-height:1.9">
+        天宫 v3 · 数据存在这台设备上<br>
+        <span id="btnAbout" style="color:#8a7fb0;text-decoration:underline">看看更新了什么</span>
+      </div>
     </div>
   </div>
 
@@ -646,6 +692,31 @@ input,textarea,select{font-family:inherit}
     <div style="display:flex;gap:9px;margin-top:14px">
       <button class="mini2" id="ipCancel" style="flex:1;padding:12px">取消</button>
       <button class="ok" id="ipOk" style="flex:1;margin:0">确 定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="mAvatar">
+  <div class="sheet">
+    <h3>选个头像</h3>
+    <div class="avgrid" id="avGrid"></div>
+    <button class="mini2" id="avDefault" style="width:100%;padding:12px;margin-top:10px">用名字的第一个字</button>
+    <button class="mini2" id="avClose" style="width:100%;padding:12px;margin-top:8px">关 闭</button>
+  </div>
+</div>
+
+<div class="modal" id="mReset" style="z-index:360">
+  <div class="sheet">
+    <h3>🔑 重置密码</h3>
+    <p style="margin-bottom:14px;font-size:12px;line-height:1.8">
+      输入名字，直接设一个新密码。<br>
+      <span style="color:#ffb0b0">积分、消息、帖子都会保留。</span>
+    </p>
+    <input class="gin" id="rsName" placeholder="你的名字" autocomplete="off">
+    <input class="gin" id="rsPass" type="password" placeholder="新密码（至少 2 位）">
+    <div style="display:flex;gap:9px;margin-top:6px">
+      <button class="mini2" id="rsCancel" style="flex:1;padding:12px">取 消</button>
+      <button class="ok" id="rsOk" style="flex:1;margin:0">确 定</button>
     </div>
   </div>
 </div>
@@ -694,6 +765,21 @@ input,textarea,select{font-family:inherit}
    ============================================================ */
 
 var INVITE = '1092';
+var QUOTES = [
+  '让他说完，说出依据第几条，给他不服就重判的机会。',
+  '吵架本身不算违规，骂人才算。',
+  '判过的事，不能再拿出来当理由。',
+  '说"我只是开玩笑"不算理由，对方说不舒服就是不舒服。',
+  '打闹前先问一句"可以吗"，对方说停就立刻停。',
+  '有人哭了，先停庭，等冷静了再说。',
+  '借东西说好什么时候还，还不回来就得还并道歉。',
+  '不能因为"不公平"就要求重来，规则定了就按定的来。',
+  '法官也是队员，争的是法官自己的事，就由全队评。',
+  '一个学期结束，警告自动清零。',
+  '同意就是同意，没人是"最后一个没人要"的。',
+  '判错了可以重判一次，但要拿出新理由。'
+];
+
 var LV_TABLE = [
   { lv: 1, need: 0,    name: '天宫新人' },
   { lv: 2, need: 100,  name: '天宫队员' },
@@ -734,6 +820,11 @@ function saveUser(u) {
 
 /* ---------- 工具 ---------- */
 function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function avatarOf(u) {
+  if (!u) return '?';
+  if (u.avatar) return u.avatar;
+  return u.name ? u.name.slice(0, 1) : '?';
+}
 function esc(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -790,12 +881,13 @@ function addExp(n, reason) {
   if (!u) return;
   u.exp = (u.exp || 0) + n;
   saveUser(u);
-  renderAll();
+  renderHead();
+  checkAch();
 }
 
 /* ---------- 消息 ---------- */
 function msgs() { var a = jget(K_MSGS, []); return Array.isArray(a) ? a : []; }
-function saveMsgs(a) { sw(K_MSGS, JSON.stringify(a.slice(-300))); }
+function saveMsgs(a) { sw(K_MSGS, JSON.stringify(a.slice(-500))); }
 
 /* ============================================================
    邀请好友
@@ -872,6 +964,68 @@ document.getElementById('ivQq').onclick = function () {
   }, 1000);
 };
 
+/* ---------- 登录页：账号列表 ---------- */
+function renderAccounts() {
+  var arr = users();
+  var wrap = document.getElementById('gAccWrap');
+  var row = document.getElementById('gAccRow');
+  if (!wrap || !row) return;
+  if (!arr.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  var cur = document.getElementById('gName').value.trim();
+  var h = '';
+  arr.forEach(function (u) {
+    h += '<div class="acc' + (u.name === cur ? ' cur' : '') + '" data-acc="' + u.id + '">' +
+      '<div class="accAv">' + esc(avatarOf(u)) + '</div>' +
+      '<span>' + esc(u.name) + '</span></div>';
+  });
+  row.innerHTML = h;
+}
+
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('[data-acc]');
+  if (!a) return;
+  var id = a.getAttribute('data-acc');
+  var arr = users(), u = null;
+  arr.forEach(function (x) { if (x.id === id) u = x; });
+  if (!u) return;
+  document.getElementById('gName').value = u.name;
+  document.getElementById('gPass').value = '';
+  document.getElementById('gPass').focus();
+  renderAccounts();
+});
+
+/* ---------- 登录页：重置密码 ---------- */
+document.getElementById('gForgot').onclick = function () {
+  document.getElementById('rsName').value = document.getElementById('gName').value.trim();
+  document.getElementById('rsPass').value = '';
+  document.getElementById('mReset').classList.add('on');
+  setTimeout(function () {
+    var el = document.getElementById('rsName');
+    if (!el.value) el.focus();
+    else document.getElementById('rsPass').focus();
+  }, 140);
+};
+document.getElementById('rsCancel').onclick = function () {
+  document.getElementById('mReset').classList.remove('on');
+};
+document.getElementById('rsOk').onclick = function () {
+  var n = document.getElementById('rsName').value.trim();
+  var pw = document.getElementById('rsPass').value.trim();
+  if (!n) { toast('先写名字'); return; }
+  if (pw.length < 2) { toast('密码至少 2 位'); return; }
+  var arr = users(), u = null;
+  arr.forEach(function (x) { if (x.name === n) u = x; });
+  if (!u) { toast('没有叫「' + n + '」的人，先去注册'); return; }
+  u.pass = pw;
+  saveUsers(arr);
+  document.getElementById('mReset').classList.remove('on');
+  document.getElementById('gName').value = n;
+  document.getElementById('gPass').value = '';
+  renderAccounts();
+  toast('密码改好了，用新密码进入');
+};
+
 /* ============================================================
    登录
    ============================================================ */
@@ -909,7 +1063,7 @@ function doLogin() {
 /* ============================================================
    渲染
    ============================================================ */
-function renderAll() {
+function renderHead() {
   var u = curUser();
   if (!u) return;
   var exp = u.exp || 0;
@@ -918,6 +1072,8 @@ function renderAll() {
   var dstr = (d.getMonth() + 1) + '月' + d.getDate() + '日';
 
   document.getElementById('heroDate').textContent = '天宫 · ' + dstr;
+  var qi = new Date().getDate() % QUOTES.length;
+  document.getElementById('heroQuote').textContent = QUOTES[qi];
   document.getElementById('cardDate').textContent = dstr;
   var sup = u.role === 'super';
   document.getElementById('heroName').innerHTML = '你好，' + esc(u.name) +
@@ -933,7 +1089,7 @@ function renderAll() {
     ? ('经验 ' + exp + ' / ' + nx.need + '　再 ' + (nx.need - exp) + ' 升 ' + nx.name)
     : ('经验 ' + exp + '　已是最高等级');
 
-  document.getElementById('meAv').textContent = u.name.slice(0, 1);
+  document.getElementById('meAv').textContent = avatarOf(u);
   document.getElementById('meName').innerHTML = esc(u.name) +
     (sup ? '<span class="crown">超管</span>' : '');
   document.getElementById('meLvText').textContent = 'Lv.' + lv.lv + ' · ' + lv.name;
@@ -943,8 +1099,8 @@ function renderAll() {
     ? ('经验 ' + exp + ' / ' + nx.need)
     : ('经验 ' + exp);
 
-  var myMsgs = msgs().filter(function (m) { return m.uid === u.id; }).length;
-  document.getElementById('stMsg').textContent = myMsgs;
+  document.getElementById('stMsg').textContent =
+    msgs().filter(function (m) { return m.uid === u.id; }).length;
   document.getElementById('stDay').textContent =
     Math.max(1, Math.ceil((Date.now() - (u.joined || Date.now())) / 86400000));
   document.getElementById('stDoc').textContent = DOCS.length;
@@ -959,13 +1115,6 @@ function renderAll() {
   });
   document.getElementById('lvTable').innerHTML = lt;
 
-  renderMsgs();
-  renderDocs();
-  renderAct();
-  renderLaw();
-  renderSquare();
-  renderMoods();
-
   var sb = document.getElementById('btnSign');
   if (sb) {
     var signed = u.lastSign === todayStr();
@@ -974,12 +1123,32 @@ function renderAll() {
       : '📅 今日签到 +10 经验';
     sb.classList.toggle('ok', signed);
   }
+}
+
+function renderAll() {
+  var u = curUser();
+  if (!u) return;
+  renderHead();
+
+  var vis = {};
+  ['paneHome', 'paneSquare', 'paneChat', 'paneDocs', 'paneLaw', 'paneMe'].forEach(function (k) {
+    var el = document.getElementById(k);
+    vis[k] = !!(el && el.classList.contains('on'));
+  });
+  if (vis.paneHome || vis.paneChat) renderMsgs();
+  if (vis.paneHome || vis.paneDocs) renderDocs();
+  if (vis.paneHome) renderAct();
+  if (vis.paneLaw) renderLaw();
+  if (vis.paneSquare) { renderSquare(); renderMoods(); }
+  if (vis.paneMe) renderAchCard();
+
   checkAch();
 }
 
-function renderMsgs() {
+function renderMsgs(forceBottom) {
   var box = document.getElementById('msgs');
   if (!box) return;
+  var atBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
   var list = msgs();
   var u = curUser();
   document.getElementById('msgCount').textContent = list.length + ' 条';
@@ -1003,15 +1172,17 @@ function renderMsgs() {
       h += '<div style="text-align:center;font-size:10px;color:#6f6493;' +
         'margin:14px 0 12px;letter-spacing:1px">— ' + tt + ' —</div>';
     }
+    var au = null;
+    us.forEach(function (x) { if (x.id === m.uid) au = x; });
     h += '<div class="m ' + (me ? 'me' : 'other') + '">' +
-      '<div class="av">' + esc(m.name.slice(0, 1)) + '</div>' +
+      '<div class="av">' + esc(avatarOf(au || { name: m.name })) + '</div>' +
       '<div class="mb"><div class="mn">' + esc(m.name) +
         (superMap[m.uid] ? '<span class="crown">超管</span>' : '') +
         ' · ' + fmtTime(m.t) + '</div>' +
       '<div class="mt">' + esc(m.text) + '</div></div></div>';
   });
   box.innerHTML = h;
-  box.scrollTop = box.scrollHeight;
+  if (forceBottom || atBottom) box.scrollTop = box.scrollHeight;
 }
 
 function renderAct() {
@@ -1058,7 +1229,7 @@ function sendMsg() {
   inp.value = '';
   addExp(3);
   pushAct('💬', u.name + '：' + (txt.length > 18 ? txt.slice(0, 18) + '…' : txt));
-  renderMsgs();
+  renderMsgs(true);
 }
 
 /* ============================================================
@@ -1127,6 +1298,15 @@ function idbGetImg(id) {
     });
   });
 }
+function idbDelImg(id) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('imgs', 'readwrite');
+      tx.objectStore('imgs').delete(id);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  });
+}
 function idbGet(id) {
   return idb().then(function (db) {
     return new Promise(function (res, rej) {
@@ -1163,7 +1343,8 @@ function renderDocs() {
     return !kw || (d.name || '').toLowerCase().indexOf(kw) >= 0;
   });
   if (!DOCS.length) {
-    box.innerHTML = '<div class="empty">文库还空着<br>上传的文档会存在这台设备上</div>';
+    box.innerHTML = '<div class="empty">文库还空着<br>点上面的虚线框就能上传<br>' +
+      '<span style="color:#5f5680;font-size:11px">支持 txt / Word / PPT / PDF / 图片</span></div>';
     return;
   }
   if (!list.length) {
@@ -1210,7 +1391,10 @@ function uploadFiles(files) {
         uname: u.name,
         t: Date.now(),
         blob: f
-      }).then(function () { ok++; });
+      }).then(function () {
+        ok++;
+        if (arr.length > 1) toast('已上传 ' + ok + ' / ' + arr.length);
+      });
     });
   });
   chain.then(function () {
@@ -1270,10 +1454,43 @@ function goTab(name) {
   document.querySelectorAll('.pane').forEach(function (x) {
     x.classList.toggle('on', x.id === 'pane' + name);
   });
-  if (name === 'Chat') setTimeout(function () {
-    var b = document.getElementById('msgs');
-    if (b) b.scrollTop = b.scrollHeight;
-  }, 40);
+
+  // 切过去就把那一页画出来（不然会是空白）
+  if (name === 'Chat') {
+    renderMsgs(true);
+    setTimeout(function () {
+      var b = document.getElementById('msgs');
+      if (b) b.scrollTop = b.scrollHeight;
+    }, 60);
+  } else if (name === 'Square') {
+    renderSquare();
+    renderMoods();
+  } else if (name === 'Docs') {
+    renderDocs();
+  } else if (name === 'Law') {
+    renderLaw();
+  } else if (name === 'Home') {
+    renderAct();
+    renderMsgs();
+  } else if (name === 'Me') {
+    renderAchCard();
+  }
+}
+
+/* 我的页成就卡 */
+function renderAchCard() {
+  var box = document.getElementById('achBox');
+  if (!box) return;
+  var got = achGot(myStats());
+  var h = '', n = 0;
+  ACH.forEach(function (a) {
+    if (got[a.id]) n++;
+    h += '<div class="' + (got[a.id] ? 'got' : '') + '"><i>' + a.i + '</i>' +
+      '<span>' + a.n + '</span></div>';
+  });
+  box.innerHTML = h;
+  var ac = document.getElementById('achCount');
+  if (ac) ac.textContent = n + ' / 12';
 }
 
 document.querySelectorAll('.tabbar .tb').forEach(function (el) {
@@ -1288,8 +1505,22 @@ document.getElementById('gBtn').onclick = doLogin;
 document.getElementById('gCode').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') doLogin();
 });
+document.getElementById('gPass').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    var c = document.getElementById('gCode');
+    if (c.value.trim()) doLogin();
+    else c.focus();
+  }
+});
 
 document.getElementById('chatSend').onclick = sendMsg;
+(function () {
+  var ci = document.getElementById('chatIn');
+  var cb = document.getElementById('chatSend');
+  function sync() { cb.disabled = !ci.value.trim(); }
+  ci.addEventListener('input', sync);
+  sync();
+})();
 document.getElementById('chatIn').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') sendMsg();
 });
@@ -1674,36 +1905,56 @@ var MOODS = [
 ];
 
 function posts() { var a = jget('tg_posts', []); return Array.isArray(a) ? a : []; }
-function savePosts(a) { sw('tg_posts', JSON.stringify(a.slice(-120))); }
+function savePosts(a) {
+  var cut = a.length > 200 ? a.slice(a.length - 200) : a;
+  sw('tg_posts', JSON.stringify(cut));
+}
 
 var ACH = [
-  { id: 'msg1',  i: '💬', n: '开口说话' },
-  { id: 'msg10', i: '🗣️', n: '话痨' },
-  { id: 'doc1',  i: '📄', n: '第一份' },
-  { id: 'doc5',  i: '📚', n: '藏书家' },
-  { id: 'post1', i: '📣', n: '首帖' },
-  { id: 'sign7', i: '📅', n: '连签七天' },
-  { id: 'judge', i: '⚖️', n: '开过庭' },
-  { id: 'lv5',   i: '👑', n: 'Lv.5 长老' }
+  { id: 'msg1',   i: '💬', n: '开口说话' },
+  { id: 'msg10',  i: '🗣️', n: '话痨' },
+  { id: 'msg30',  i: '📢', n: '聊天达人' },
+  { id: 'doc1',   i: '📄', n: '第一份' },
+  { id: 'doc5',   i: '📚', n: '藏书家' },
+  { id: 'post1',  i: '📣', n: '首帖' },
+  { id: 'img1',   i: '📷', n: '带图发帖' },
+  { id: 'like5',  i: '❤️', n: '人缘不错' },
+  { id: 'vote1',  i: '🗳️', n: '投过票' },
+  { id: 'sign7',  i: '📅', n: '连签七天' },
+  { id: 'judge',  i: '⚖️', n: '开过庭' },
+  { id: 'lv5',    i: '👑', n: 'Lv.5 长老' }
 ];
 
 function myStats() {
   var u = curUser();
-  if (!u) return { msgs: 0, docs: 0, posts: 0, cases: 0, signDays: 0, exp: 0 };
+  if (!u) return { msgs: 0, docs: 0, posts: 0, cases: 0, signDays: 0, exp: 0, likes: 0, hasImg: false, voted: false };
+  var mine = posts().filter(function (p) { return p.uid === u.id; });
+  var likes = 0, hasImg = false;
+  mine.forEach(function (p) {
+    likes += (p.likes || []).length;
+    if (p.imgId) hasImg = true;
+  });
+  var voted = jget('tg_votes', []).some(function (v) {
+    return (v.opts || []).some(function (o) { return (o.v || []).indexOf(u.id) >= 0; });
+  });
   return {
     msgs: msgs().filter(function (m) { return m.uid === u.id; }).length,
     docs: DOCS.filter(function (d) { return d.uid === u.id; }).length,
-    posts: posts().filter(function (p) { return p.uid === u.id; }).length,
+    posts: mine.length,
     cases: jget('tg_cases', []).length,
     signDays: u.signDays || 0,
-    exp: u.exp || 0
+    exp: u.exp || 0,
+    likes: likes,
+    hasImg: hasImg,
+    voted: voted
   };
 }
 function achGot(s) {
   return {
-    msg1: s.msgs >= 1, msg10: s.msgs >= 10,
+    msg1: s.msgs >= 1, msg10: s.msgs >= 10, msg30: s.msgs >= 30,
     doc1: s.docs >= 1, doc5: s.docs >= 5,
-    post1: s.posts >= 1, sign7: s.signDays >= 7,
+    post1: s.posts >= 1, img1: !!s.hasImg, like5: s.likes >= 5,
+    vote1: !!s.voted, sign7: s.signDays >= 7,
     judge: s.cases >= 1, lv5: lvOf(s.exp).lv >= 5
   };
 }
@@ -1798,9 +2049,9 @@ function renderSquare() {
     });
     h += '</div>';
     h += '<div style="font-size:11px;color:#8a7fb0;margin-top:12px;line-height:1.9">' +
-      '已解锁 ' + n + ' / 8。发消息、传文档、发帖、签到、开庭都能解锁。</div>';
+      '已解锁 ' + n + ' / 12。<br>发消息、传文档、发帖、带图、投票、签到、开庭都能解锁。</div>';
     var ac = document.getElementById('achCount');
-    if (ac) ac.textContent = n + ' / 8';
+    if (ac) ac.textContent = n + ' / 12';
   }
   box.innerHTML = h;
 
@@ -1824,7 +2075,7 @@ function renderSquare() {
   if (ac2 && SQ_TAB !== 'ach') {
     var g2 = achGot(myStats()), c2 = 0;
     ACH.forEach(function (a) { if (g2[a.id]) c2++; });
-    ac2.textContent = c2 + ' / 8';
+    ac2.textContent = c2 + ' / 12';
   }
 }
 
@@ -1885,8 +2136,11 @@ document.addEventListener('click', function (e) {
   var pd = e.target.closest('[data-postdel]');
   if (pd) {
     var did = pd.getAttribute('data-postdel');
-    confirmBox('删掉这条？', function () {
-      savePosts(posts().filter(function (p) { return p.id !== did; }));
+    confirmBox('删掉这条？图片也会一起删掉。', function () {
+      var arrp = posts(), gone = null;
+      arrp.forEach(function (p) { if (p.id === did) gone = p; });
+      savePosts(arrp.filter(function (p) { return p.id !== did; }));
+      if (gone && gone.imgId) { idbDelImg(gone.imgId).catch(function () {}); }
       renderSquare();
       toast('已删除');
     });
@@ -2097,6 +2351,64 @@ document.getElementById('pimgIn').onchange = function (e) {
 };
 
 /* ============================================================
+   头像
+   ============================================================ */
+var AVATARS = ['🐱','🐶','🐰','🦊','🐼','🐨','🐯','🦁','🐸','🐵','🦄','🐲',
+               '🌟','🌙','🌈','🔥','⚡','☀️','🌸','🍀','🍎','🍜','🎈','🎨',
+               '⚽','🎮','🎧','📚','🏆','👑'];
+
+function renderAvatarGrid() {
+  var u = curUser();
+  var cur = (u && u.avatar) || '';
+  var h = '';
+  AVATARS.forEach(function (e) {
+    h += '<span data-av="' + e + '" class="' + (cur === e ? 'on' : '') + '">' + e + '</span>';
+  });
+  document.getElementById('avGrid').innerHTML = h;
+}
+
+document.getElementById('btnAvatar').onclick = function () {
+  renderAvatarGrid();
+  document.getElementById('mAvatar').classList.add('on');
+};
+document.getElementById('avClose').onclick = function () {
+  document.getElementById('mAvatar').classList.remove('on');
+};
+document.getElementById('avDefault').onclick = function () {
+  var u = curUser();
+  u.avatar = '';
+  saveUser(u);
+  document.getElementById('mAvatar').classList.remove('on');
+  renderAll();
+  toast('换回名字头像');
+};
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('[data-av]');
+  if (!a) return;
+  var u = curUser();
+  if (!u) return;
+  u.avatar = a.getAttribute('data-av');
+  saveUser(u);
+  document.getElementById('mAvatar').classList.remove('on');
+  renderAll();
+  toast('头像换好了');
+});
+
+/* ============================================================
+   关于
+   ============================================================ */
+document.getElementById('btnAbout').onclick = function () {
+  modal('关于天宫', '<div class="pre" style="font-size:12px">' +
+    '天宫 v3\n\n' +
+    'v1  基础版：首页、聊天、文档、等级\n' +
+    'v2  加入广场、排行榜、成就、法庭、签到、邀请、搬家码、搜索、发图、PWA\n' +
+    'v3  账号切换、忘记密码、自选头像、性能优化、滚动修复\n\n' +
+    '所有数据都存在这台设备的浏览器里，\n不会上传到任何服务器。\n\n' +
+    '换设备请用「我的 → 生成搬家码」。' +
+    '</div>');
+};
+
+/* ============================================================
    超级管理员
    ============================================================ */
 var ipCb = null;
@@ -2293,6 +2605,7 @@ function showFromBar() {
 function boot() {
   ensureSuper();
   showFromBar();
+  renderAccounts();
   var u = curUser();
   if (!UID || !u) {
     document.getElementById('gate').classList.remove('off');
@@ -2304,6 +2617,17 @@ function boot() {
   renderAll();
   loadDocs();
 }
+
+/* 输入框聚焦时滚动到视野中间，避免被键盘挡住 */
+['chatIn', 'postIn'].forEach(function (id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('focus', function () {
+    setTimeout(function () {
+      try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+    }, 320);
+  });
+});
 
 /* 首屏遮罩收起 */
 function hideBoot() {
