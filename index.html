@@ -297,6 +297,59 @@ input,textarea,select{font-family:inherit}
 .sheet .pre{font-size:12.5px;line-height:1.9;color:var(--txt);white-space:pre-wrap;
   max-height:50vh;overflow-y:auto;background:rgba(0,0,0,.25);padding:13px;border-radius:12px}
 
+/* 任务 / 商店 */
+.tk{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.05);
+  border-radius:16px;padding:13px;margin-bottom:10px;position:relative;overflow:hidden}
+.tk.done{opacity:.55}
+.tk .th{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.tk .ti2{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  font-size:19px;background:rgba(232,200,106,.14);flex-shrink:0}
+.tk .tt2{flex:1;min-width:0}
+.tk .tt2 b{display:block;font-size:13.5px;font-weight:800;margin-bottom:3px}
+.tk .tt2 span{font-size:10.5px;color:var(--sub);line-height:1.6;display:block}
+.tk .tf{display:flex;align-items:center;gap:8px;margin-top:10px}
+.tk .tf .coin{font-size:11px;font-weight:800;color:#ffd36a;
+  background:rgba(255,200,80,.14);padding:3px 9px;border-radius:8px}
+.tk .tf .day{font-size:10px;color:#8a7fb0}
+.tk .tf button{margin-left:auto;padding:8px 16px;border-radius:11px;font-size:12px;
+  font-weight:800;background:linear-gradient(135deg,#f5e3a8,#d9b955);color:#2a1d05}
+.tk .tf button:disabled{background:rgba(255,255,255,.07);color:#6f6493}
+.tk .tf button.go{background:linear-gradient(135deg,#8f7cf0,#6b55d8);color:#fff}
+
+.badgeN{position:absolute;top:9px;right:10px;background:#ff5f8f;color:#fff;
+  font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px}
+
+.sub{background:rgba(255,255,255,.045);border-radius:15px;padding:12px;margin-bottom:10px}
+.sub .sh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.sub .sh .sa{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  font-size:13px;font-weight:800;color:#1a1033;background:linear-gradient(140deg,#f5e3a8,#d9b955);
+  flex-shrink:0}
+.sub .sh b{font-size:12.5px;flex:1}
+.sub .sh span{font-size:10px;color:#6f6493}
+.sub img{width:100%;border-radius:11px;margin-bottom:9px;display:block;background:rgba(0,0,0,.2)}
+.sub .sf{display:flex;gap:8px}
+.sub .sf button{flex:1;padding:9px;border-radius:10px;font-size:12px;font-weight:800}
+.sub .sf .yes{background:rgba(126,232,154,.2);color:#9bf0b4;border:1px solid rgba(126,232,154,.35)}
+.sub .sf .no{background:rgba(255,90,90,.15);color:#ff9d9d;border:1px solid rgba(255,90,90,.3)}
+
+.shop{display:flex;align-items:center;gap:11px;padding:12px;border-radius:15px;
+  background:rgba(255,255,255,.045);margin-bottom:9px}
+.shop .si{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+  font-size:21px;background:rgba(232,200,106,.12);flex-shrink:0}
+.shop .sm{flex:1;min-width:0}
+.shop .sm b{display:block;font-size:13px;font-weight:700}
+.shop .sm span{font-size:10.5px;color:var(--sub)}
+.shop .sm span em{font-style:normal;color:#ffd36a;font-weight:800}
+.shop button{padding:8px 15px;border-radius:11px;font-size:12px;font-weight:800;
+  background:linear-gradient(135deg,#f5e3a8,#d9b955);color:#2a1d05;flex-shrink:0}
+.shop button:disabled{background:rgba(255,255,255,.07);color:#6f6493}
+
+.coinbar{display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:13px;
+  background:linear-gradient(135deg,rgba(255,200,80,.18),rgba(255,160,40,.08));
+  border:1px solid rgba(255,200,80,.3);margin-bottom:13px}
+.coinbar b{font-size:20px;font-weight:900;color:#ffd36a}
+.coinbar span{font-size:11px;color:#b9a882}
+
 /* 广场 */
 .post{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.05);
   border-radius:16px;padding:13px;margin-bottom:11px}
@@ -469,6 +522,10 @@ input,textarea,select{font-family:inherit}
         <div class="bar"><i id="heroBar" style="width:0%"></i></div>
       </div>
       <div class="hexp" id="heroExp">经验 0 / 100</div>
+      <div style="margin-top:11px;position:relative;z-index:1">
+        <span class="lvbadge" style="background:rgba(255,200,80,.22);border-color:rgba(255,200,80,.45);color:#ffd36a">
+          💰 <b id="heroCoin">0</b> 天宫币</span>
+      </div>
       <button class="signin" id="btnSign">📅 今日签到 +10 经验</button>
     </div>
 
@@ -588,6 +645,28 @@ input,textarea,select{font-family:inherit}
     </div>
   </div>
 
+  <!-- 任务 -->
+  <div class="pane" id="paneTask">
+    <div class="card">
+      <div class="card-h"><b>🎯 天宫任务</b><span id="tkHint">做完拍照给超管看</span></div>
+      <div class="segbar">
+        <span class="sg on" data-tk="list">任务</span>
+        <span class="sg" data-tk="shop">商店</span>
+        <span class="sg" data-tk="review" id="tkReviewTab" style="display:none">审核</span>
+      </div>
+      <div class="coinbar">💰 天宫币 <b id="coinNum">0</b> <span>枚</span></div>
+      <div id="taskBody"></div>
+      <input type="file" id="subImgIn" accept="image/*" capture="environment" style="display:none">
+    </div>
+    <div class="card" id="adminTkCard" style="display:none">
+      <div class="card-h"><b>👑 任务 / 商品管理</b><span>仅超管</span></div>
+      <div style="display:flex;gap:9px">
+        <button class="btn" id="btnAddTask" style="flex:1">＋ 加任务</button>
+        <button class="btn ghost" id="btnAddItem" style="flex:1">＋ 加商品</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 我的 -->
   <div class="pane" id="paneMe">
     <div class="card">
@@ -601,12 +680,20 @@ input,textarea,select{font-family:inherit}
           <div class="bar"><i id="meBar" style="width:0%"></i></div>
         </div>
         <div class="hexp" style="margin-top:8px" id="meExp">经验 0 / 100</div>
-        <div class="stat3">
+        <div class="stat3" style="grid-template-columns:repeat(4,1fr)">
+          <div><b id="stCoin">0</b><span>天宫币</span></div>
           <div><b id="stMsg">0</b><span>消息</span></div>
           <div><b id="stDoc">0</b><span>文档</span></div>
-          <div><b id="stDay">1</b><span>加入天数</span></div>
+          <div><b id="stDay">1</b><span>天数</span></div>
         </div>
       </div>
+    </div>
+
+    <div class="card" id="notAdminCard">
+      <div class="card-h"><b>🔑 超管入口</b><span>要密码</span></div>
+      <p style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:12px">
+        只有知道超管密码的人才能管理天宫。</p>
+      <button class="btn ghost" id="btnAdminLogin">输 入 超 管 密 码</button>
     </div>
 
     <div class="card" id="adminCard" style="display:none">
@@ -672,7 +759,7 @@ input,textarea,select{font-family:inherit}
     <div class="tb" data-tab="Square"><i>📣</i>广场</div>
     <div class="tb" data-tab="Chat"><i>💬</i>聊天</div>
     <div class="tb" data-tab="Docs"><i>📁</i>文档</div>
-    <div class="tb" data-tab="Law"><i>⚖️</i>法庭</div>
+    <div class="tb" data-tab="Task"><i>🎯</i>任务</div>
     <div class="tb" data-tab="Me"><i>👤</i>我的</div>
   </nav>
 </div>
@@ -1047,12 +1134,12 @@ function doLogin() {
     u = {
       id: uid('u'), name: name, pass: pass,
       exp: 20, joined: Date.now(), lastSign: '', signDays: 0,
-      role: arr.length === 0 ? 'super' : 'member',
+      role: 'member',
+      coins: 0,
       inviter: FROM || ''
     };
     arr.push(u);
     saveUsers(arr);
-    if (u.role === 'super') toast('你是第一个来的，已设为超级管理员');
   }
   sw(K_SESS, u.id);
   UID = u.id;
@@ -1083,6 +1170,12 @@ function renderHead() {
   document.getElementById('noticeBox').textContent = cfg.notice ||
     '天宫小队 · 内部空间。\n有事先说，说完当场判。\n—— 法官 CZ';
   document.getElementById('adminCard').style.display = sup ? '' : 'none';
+  var nac = document.getElementById('notAdminCard');
+  if (nac) nac.style.display = sup ? 'none' : '';
+  var scap = document.getElementById('stCoin');
+  if (scap) scap.textContent = u.coins || 0;
+  var hcp = document.getElementById('heroCoin');
+  if (hcp) hcp.textContent = u.coins || 0;
   document.getElementById('heroLv').textContent = 'Lv.' + lv.lv + ' ' + lv.name;
   document.getElementById('heroBar').style.width = pg + '%';
   document.getElementById('heroExp').textContent = nx
@@ -1141,6 +1234,7 @@ function renderAll() {
   if (vis.paneLaw) renderLaw();
   if (vis.paneSquare) { renderSquare(); renderMoods(); }
   if (vis.paneMe) renderAchCard();
+  if (vis.paneTask) renderTask();
 
   checkAch();
 }
@@ -1465,6 +1559,8 @@ function goTab(name) {
   } else if (name === 'Square') {
     renderSquare();
     renderMoods();
+  } else if (name === 'Task') {
+    renderTask();
   } else if (name === 'Docs') {
     renderDocs();
   } else if (name === 'Law') {
@@ -2217,8 +2313,14 @@ document.getElementById('btnUnpack').onclick = function () {
         old.role = exist.role;
         for (var i = 0; i < arr.length; i++) if (arr[i].id === old.id) arr[i] = old;
       } else {
-        old.role = arr.length === 0 ? 'super' : 'member';
+        var hasSup = arr.some(function (x) { return x.role === 'super'; });
+        old.role = (old.role === 'super' && !hasSup) ? 'super' : 'member';
         arr.push(old);
+      }
+      if (old.role === 'super') {
+        for (var i2 = 0; i2 < arr.length; i2++) {
+          if (arr[i2].id !== old.id) arr[i2].role = 'member';
+        }
       }
       saveUsers(arr);
       sw(K_SESS, old.id);
@@ -2409,6 +2511,419 @@ document.getElementById('btnAbout').onclick = function () {
 };
 
 /* ============================================================
+   任务 / 天宫币 / 商店
+   ============================================================ */
+var TK_TAB = 'list';
+
+var DEFAULT_TASKS = [
+  { id: 't_newbie', icon: '🎉', title: '第一次来到天宫', desc: '欢迎加入天宫小队，点一下就能领',
+    coins: 1, days: [1, 2, 3, 4, 5, 6, 7], needPhoto: false, repeat: 'once', active: true, t: 0 }
+];
+var WEEK_NAMES = ['一', '二', '三', '四', '五', '六', '日'];
+
+function tasks() {
+  var a = jget('tg_tasks', null);
+  if (!Array.isArray(a)) {
+    a = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+    sw('tg_tasks', JSON.stringify(a));
+  }
+  return a;
+}
+function saveTasks(a) { sw('tg_tasks', JSON.stringify(a)); }
+function subs() { var a = jget('tg_subs', []); return Array.isArray(a) ? a : []; }
+function saveSubs(a) { sw('tg_subs', JSON.stringify(a.slice(-300))); }
+function items() { var a = jget('tg_shop', []); return Array.isArray(a) ? a : []; }
+function saveItems(a) { sw('tg_shop', JSON.stringify(a)); }
+function orders() { var a = jget('tg_orders', []); return Array.isArray(a) ? a : []; }
+function saveOrders(a) { sw('tg_orders', JSON.stringify(a.slice(-200))); }
+
+function weekDay() { var d = new Date().getDay(); return d === 0 ? 7 : d; }
+function dayText(days) {
+  if (!days || days.length >= 7) return '每天';
+  return days.map(function (d) { return '周' + WEEK_NAMES[d - 1]; }).join('、');
+}
+function mySubs(taskId) {
+  var u = curUser();
+  if (!u) return [];
+  return subs().filter(function (x) { return x.taskId === taskId && x.uid === u.id; });
+}
+function pendingCount() {
+  return subs().filter(function (x) { return x.status === 'pending'; }).length;
+}
+
+function taskState(t) {
+  if (!t.active) return { ok: false, why: '已下架' };
+  if (t.days && t.days.length && t.days.indexOf(weekDay()) < 0) {
+    return { ok: false, why: '今天没有这个任务' };
+  }
+  var mine = mySubs(t.id);
+  var pend = mine.some(function (x) { return x.status === 'pending'; });
+  if (pend) return { ok: false, why: '等超管审核中', done: true };
+
+  var approved = mine.filter(function (x) { return x.status === 'approved'; });
+  if (t.repeat === 'once') {
+    if (approved.length) return { ok: false, why: '已经完成过了', done: true };
+  } else if (t.repeat === 'daily') {
+    var t0 = todayStr();
+    var hit = approved.some(function (x) {
+      var d = new Date(x.t);
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) === t0;
+    });
+    if (hit) return { ok: false, why: '今天已经做过了', done: true };
+  } else if (t.repeat === 'weekly') {
+    var now = Date.now();
+    var hitW = approved.some(function (x) { return now - x.t < 7 * 86400000; });
+    if (hitW) return { ok: false, why: '这周已经做过了', done: true };
+  }
+  return { ok: true };
+}
+
+function renderTask() {
+  var box = document.getElementById('taskBody');
+  if (!box) return;
+  var u = curUser();
+  if (!u) return;
+  var sup = u.role === 'super';
+
+  document.getElementById('coinNum').textContent = u.coins || 0;
+  var hc = document.getElementById('heroCoin');
+  if (hc) hc.textContent = u.coins || 0;
+
+  var ac = document.getElementById('adminTkCard');
+  if (ac) ac.style.display = sup ? '' : 'none';
+  var rt = document.getElementById('tkReviewTab');
+  if (rt) {
+    rt.style.display = sup ? '' : 'none';
+    var pc = pendingCount();
+    rt.textContent = pc ? ('审核 ' + pc) : '审核';
+    rt.style.color = pc ? '#ffd36a' : '';
+  }
+
+  if (!sup && TK_TAB === 'review') TK_TAB = 'list';
+
+  var h = '';
+
+  if (TK_TAB === 'list') {
+    var ts = tasks();
+    if (!ts.length) h = '<div class="empty">还没有任务<br>超管可以在下面添加</div>';
+    ts.forEach(function (t) {
+      var stt = taskState(t);
+      var repeatTxt = t.repeat === 'once' ? '仅一次' : (t.repeat === 'daily' ? '每天一次' : '每周一次');
+      h += '<div class="tk' + (stt.done ? ' done' : '') + '">' +
+        '<div class="th"><div class="ti2">' + esc(t.icon || '📌') + '</div>' +
+        '<div class="tt2"><b>' + esc(t.title) + '</b>' +
+        '<span>' + esc(t.desc || '') + '</span></div></div>' +
+        '<div class="tf">' +
+          '<span class="coin">+' + t.coins + ' 币</span>' +
+          '<span class="day">' + repeatTxt + ' · ' + dayText(t.days) + '</span>' +
+          (stt.ok
+            ? '<button class="go" data-do="' + t.id + '">' +
+              (t.needPhoto === false ? '领取' : '去完成') + '</button>'
+            : '<button disabled>' + esc(stt.why) + '</button>') +
+        '</div></div>';
+    });
+    // 我的提交记录
+    var mine = subs().filter(function (x) { return x.uid === u.id; }).slice(-5).reverse();
+    if (mine.length) {
+      h += '<div class="adm-sec">📋 我的提交</div>';
+      mine.forEach(function (x) {
+        var st = x.status === 'pending' ? '⏳ 等审核'
+          : (x.status === 'approved' ? '✅ 通过' : '❌ 没通过');
+        var col = x.status === 'pending' ? '#ffd36a'
+          : (x.status === 'approved' ? '#9bf0b4' : '#ff9d9d');
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;' +
+          'padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px">' +
+          '<span>' + esc(x.taskTitle) + '</span>' +
+          '<span style="color:' + col + ';font-weight:800">' + st + '</span></div>';
+      });
+    }
+  } else if (TK_TAB === 'shop') {
+    var its = items();
+    if (!its.length) {
+      h = '<div class="empty">商店还空着<br>超管可以添加商品</div>';
+    }
+    its.forEach(function (it) {
+      var can = (u.coins || 0) >= it.price && it.stock > 0;
+      h += '<div class="shop">' +
+        '<div class="si">' + esc(it.icon || '🎁') + '</div>' +
+        '<div class="sm"><b>' + esc(it.name) + '</b>' +
+        '<span>需要 <em>' + it.price + '</em> 币 · 剩 ' + it.stock + ' 个</span></div>' +
+        '<button data-buy="' + it.id + '"' + (can ? '' : ' disabled') + '>兑换</button>' +
+        '</div>';
+    });
+    var os = orders().slice(-5).reverse();
+    if (os.length) {
+      h += '<div class="adm-sec">🧾 最近兑换</div>';
+      os.forEach(function (o) {
+        h += '<div style="display:flex;justify-content:space-between;padding:8px 2px;' +
+          'border-bottom:1px solid rgba(255,255,255,.05);font-size:11.5px">' +
+          '<span>' + esc(o.name) + ' 换了 ' + esc(o.itemName) + '</span>' +
+          '<span style="color:#8a7fb0">-' + o.price + ' 币</span></div>';
+      });
+    }
+  } else {
+    var ps = subs().filter(function (x) { return x.status === 'pending'; });
+    if (!ps.length) h = '<div class="empty">没有待审核的提交</div>';
+    ps.reverse().forEach(function (x) {
+      h += '<div class="sub">' +
+        '<div class="sh"><div class="sa">' + esc((x.name || '?').slice(0, 1)) + '</div>' +
+        '<b>' + esc(x.name) + '</b><span>' + fmtTime(x.t) + '</span></div>' +
+        '<div style="font-size:12px;color:#c9c0e6;margin-bottom:8px">任务：' +
+        esc(x.taskTitle) + '　<span style="color:#ffd36a">+' + x.coins + ' 币</span></div>' +
+        (x.imgId ? '<img data-subimg="' + x.imgId + '" alt="照片">' : '') +
+        '<div class="sf">' +
+        '<button class="yes" data-pass="' + x.id + '">✅ 通过</button>' +
+        '<button class="no" data-reject="' + x.id + '">❌ 不通过</button>' +
+        '</div></div>';
+    });
+  }
+
+  box.innerHTML = h;
+
+  // 异步加载照片
+  setTimeout(function () {
+    var ims = box.querySelectorAll('[data-subimg]');
+    for (var i = 0; i < ims.length; i++) {
+      (function (im) {
+        idbGetImg(im.getAttribute('data-subimg')).then(function (o) {
+          if (o && o.blob) { try { im.src = URL.createObjectURL(o.blob); } catch (e) {} }
+        }).catch(function () {});
+      })(ims[i]);
+    }
+  }, 0);
+}
+
+/* ---------- 完成任务 ---------- */
+var SUB_TASK_ID = null;
+
+function startTask(id) {
+  var t = null;
+  tasks().forEach(function (x) { if (x.id === id) t = x; });
+  if (!t) return;
+  var stt = taskState(t);
+  if (!stt.ok) { toast(stt.why); return; }
+
+  if (t.needPhoto === false) {
+    // 不用拍照，直接发币
+    var u = curUser();
+    u.coins = (u.coins || 0) + t.coins;
+    saveUser(u);
+    var a = subs();
+    a.push({
+      id: uid('s'), taskId: t.id, taskTitle: t.title, uid: u.id, name: u.name,
+      coins: t.coins, imgId: '', status: 'approved', t: Date.now(), auto: true
+    });
+    saveSubs(a);
+    pushAct('💰', u.name + ' 完成了「' + t.title + '」，+' + t.coins + ' 币');
+    renderTask(); renderHead();
+    toast('领到了 ' + t.coins + ' 枚天宫币 🎉');
+    return;
+  }
+
+  SUB_TASK_ID = id;
+  var inp = document.getElementById('subImgIn');
+  inp.value = '';
+  inp.click();
+}
+
+document.getElementById('subImgIn').onchange = function (e) {
+  var f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f || !SUB_TASK_ID) return;
+  var t = null;
+  tasks().forEach(function (x) { if (x.id === SUB_TASK_ID) t = x; });
+  if (!t) return;
+  toast('照片处理中…');
+  compressImg(f, function (b) {
+    if (!b) { toast('这张图打不开'); return; }
+    var iid = uid('i');
+    idbPutImg({ id: iid, blob: b, t: Date.now() }).then(function () {
+      var u = curUser();
+      var a = subs();
+      a.push({
+        id: uid('s'), taskId: t.id, taskTitle: t.title, uid: u.id, name: u.name,
+        coins: t.coins, imgId: iid, status: 'pending', t: Date.now()
+      });
+      saveSubs(a);
+      SUB_TASK_ID = null;
+      pushAct('📷', u.name + ' 提交了「' + t.title + '」，等超管审核');
+      renderTask();
+      toast('提交成功，等超管审核');
+    }).catch(function () { toast('照片存不下，空间可能满了'); });
+  });
+};
+
+/* ---------- 审核 ---------- */
+function approveSub(id, pass) {
+  var arr = subs(), sub = null;
+  arr.forEach(function (x) { if (x.id === id) sub = x; });
+  if (!sub || sub.status !== 'pending') return;
+
+  if (pass) {
+    var us = users();
+    var target = null;
+    us.forEach(function (x) { if (x.id === sub.uid) target = x; });
+    if (target) {
+      target.coins = (target.coins || 0) + (sub.coins || 0);
+      saveUsers(us);
+    }
+    sub.status = 'approved';
+    sub.reviewT = Date.now();
+    sub.reviewBy = (curUser() || {}).name || '';
+    saveSubs(arr);
+    pushAct('✅', '「' + sub.taskTitle + '」审核通过，' + sub.name + ' +' + sub.coins + ' 币');
+    toast('已通过，' + sub.name + ' 得到 ' + sub.coins + ' 币');
+  } else {
+    sub.status = 'rejected';
+    sub.reviewT = Date.now();
+    saveSubs(arr);
+    pushAct('❌', '「' + sub.taskTitle + '」没通过');
+    toast('已退回');
+  }
+  renderTask();
+  renderHead();
+}
+
+/* ---------- 商店 ---------- */
+function buyItem(id) {
+  var u = curUser();
+  var arr = items(), it = null;
+  arr.forEach(function (x) { if (x.id === id) it = x; });
+  if (!it) return;
+  if (it.stock <= 0) { toast('这个没货了'); return; }
+  if ((u.coins || 0) < it.price) { toast('天宫币不够'); return; }
+
+  confirmBox('用 ' + it.price + ' 枚天宫币换「' + it.name + '」？', function () {
+    var us = users(), me = null;
+    us.forEach(function (x) { if (x.id === u.id) me = x; });
+    if (!me || (me.coins || 0) < it.price) { toast('币不够了'); return; }
+    me.coins -= it.price;
+    saveUsers(us);
+
+    var its = items();
+    its.forEach(function (x) { if (x.id === id) x.stock--; });
+    saveItems(its);
+
+    var os = orders();
+    os.push({ id: uid('o'), uid: me.id, name: me.name, itemId: it.id,
+      itemName: it.name, price: it.price, t: Date.now() });
+    saveOrders(os);
+
+    UID = me.id;
+    renderHead(); renderTask();
+    pushAct('🛒', me.name + ' 兑换了「' + it.name + '」');
+    toast('兑换成功！找超管拿东西吧');
+  });
+}
+
+/* ---------- 超管：加任务 / 加商品 ---------- */
+function addTaskForm() {
+  askInput('添加任务', [
+    { ph: '任务名字，比如：扫地' },
+    { ph: '说明（可以留空）' },
+    { ph: '奖励几枚天宫币', val: '1', type: 'number' },
+    { ph: '哪几天能做：1234567 全周 / 135 一三五', val: '1234567' },
+    { ph: '要拍照吗：1 要 / 0 不要', val: '1', type: 'number' },
+    { ph: '重复：1 仅一次 / 2 每天 / 3 每周', val: '2', type: 'number' }
+  ], function (v) {
+    if (!v[0]) { toast('名字不能空'); return false; }
+    var days = String(v[3] || '').replace(/[^1-7]/g, '').split('').map(function (c) {
+      return parseInt(c, 10);
+    });
+    if (!days.length) days = [1, 2, 3, 4, 5, 6, 7];
+    days = days.filter(function (x, i, a) { return a.indexOf(x) === i; }).sort();
+    var rep3 = v[5] === '1' ? 'once' : (v[5] === '3' ? 'weekly' : 'daily');
+    var a = tasks();
+    a.push({
+      id: uid('t'), icon: '📌', title: v[0], desc: v[1] || '',
+      coins: Math.max(1, parseInt(v[2], 10) || 1),
+      days: days, needPhoto: v[4] !== '0', repeat: rep3, active: true, t: Date.now()
+    });
+    saveTasks(a);
+    renderTask();
+    toast('任务加好了');
+  });
+}
+
+function addItemForm() {
+  askInput('添加商品', [
+    { ph: '商品名字，比如：一瓶雪碧' },
+    { ph: '图标（一个表情，比如 🥤）', val: '🎁' },
+    { ph: '要几枚天宫币', val: '3', type: 'number' },
+    { ph: '库存几个', val: '5', type: 'number' }
+  ], function (v) {
+    if (!v[0]) { toast('名字不能空'); return false; }
+    var a = items();
+    a.push({
+      id: uid('i'), name: v[0], icon: v[1] || '🎁',
+      price: Math.max(1, parseInt(v[2], 10) || 1),
+      stock: Math.max(0, parseInt(v[3], 10) || 0)
+    });
+    saveItems(a);
+    renderTask();
+    toast('商品上架了');
+  });
+}
+
+/* ---------- 任务页交互 ---------- */
+document.addEventListener('click', function (e) {
+  var tk = e.target.closest('[data-tk]');
+  if (tk) {
+    TK_TAB = tk.getAttribute('data-tk');
+    document.querySelectorAll('[data-tk]').forEach(function (x) {
+      x.classList.toggle('on', x === tk);
+    });
+    renderTask();
+    return;
+  }
+  var d = e.target.closest('[data-do]');
+  if (d) { startTask(d.getAttribute('data-do')); return; }
+
+  var ps = e.target.closest('[data-pass]');
+  if (ps) {
+    var me = curUser();
+    if (!me || me.role !== 'super') { toast('只有超管能审核'); return; }
+    approveSub(ps.getAttribute('data-pass'), true);
+    return;
+  }
+  var rj = e.target.closest('[data-reject]');
+  if (rj) {
+    var me2 = curUser();
+    if (!me2 || me2.role !== 'super') { toast('只有超管能审核'); return; }
+    approveSub(rj.getAttribute('data-reject'), false);
+    return;
+  }
+  var by = e.target.closest('[data-buy]');
+  if (by) { buyItem(by.getAttribute('data-buy')); return; }
+});
+
+/* ---------- 超管登录 ---------- */
+document.getElementById('btnAdminLogin').onclick = function () {
+  askInput('超管密码', [{ ph: '输入超管密码', type: 'password' }], function (v) {
+    var p = (v[0] || '').trim();
+    if (!p) return false;
+    if (p !== adminPass()) { toast('密码不对'); return false; }
+    var arr = users(), me = curUser();
+    arr.forEach(function (x) {
+      if (x.id === me.id) x.role = 'super';
+      else if (x.role === 'super') x.role = 'member';
+    });
+    saveUsers(arr);
+    renderHead(); renderAll();
+    toast('你现在是超管了 👑');
+  });
+};
+
+document.getElementById('btnAddTask').onclick = function () {
+  if ((curUser() || {}).role !== 'super') { toast('只有超管能加任务'); return; }
+  addTaskForm();
+};
+document.getElementById('btnAddItem').onclick = function () {
+  if ((curUser() || {}).role !== 'super') { toast('只有超管能加商品'); return; }
+  addItemForm();
+};
+
+/* ============================================================
    超级管理员
    ============================================================ */
 var ipCb = null;
@@ -2418,7 +2933,8 @@ function askInput(title, fields, cb) {
   fields.forEach(function (f, i) {
     var v = (f.val === undefined ? '' : String(f.val)).replace(/"/g, '&quot;');
     h += '<input class="gin" id="ipf' + i + '" placeholder="' + f.ph + '" value="' + v + '" ' +
-      (f.type === 'number' ? 'inputmode="numeric"' : '') + '>';
+      (f.type === 'number' ? 'inputmode="numeric"' : '') +
+      (f.type === 'password' ? 'type="password"' : '') + '>';
   });
   document.getElementById('ipFields').innerHTML = h;
   ipCb = function () {
@@ -2465,6 +2981,12 @@ function renderAdminPanel() {
       (x.id === me.id ? '' : '<div class="ab" data-adm-del="' + x.id + '">🗑</div>') +
       '</div>';
   });
+
+  h += '<div class="adm-sec">🔑 超管密码</div>';
+  h += '<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">' +
+    '<span style="font-size:12px;color:#c9c0e6">当前：<b style="color:#e8c86a">' +
+    esc(adminPass()) + '</b></span>' +
+    '<button class="mini2" data-adm-pass="1" style="margin-left:auto">修改</button></div>';
 
   h += '<div class="adm-sec">📯 首页公告</div>';
   h += '<div style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:10px;' +
@@ -2533,9 +3055,23 @@ document.addEventListener('click', function (e) {
     users().forEach(function (x) { if (x.id === id) who = x.name; });
     confirmBox('把「' + who + '」从天宫除名？他发过的消息会保留。', function () {
       saveUsers(users().filter(function (x) { return x.id !== id; }));
-      ensureSuper();
+      ensureAdmin(); fixRoles();
       renderAdminPanel(); renderAll();
       toast('已除名');
+    });
+    return;
+  }
+
+  var ap = e.target.closest('[data-adm-pass]');
+  if (ap) {
+    askInput('修改超管密码', [{ ph: '新的超管密码（至少 4 位）', type: 'password' }], function (v) {
+      var p = (v[0] || '').trim();
+      if (p.length < 4) { toast('至少 4 位'); return false; }
+      var cfg = jget('tg_cfg', {});
+      cfg.adminPass = p;
+      sw('tg_cfg', JSON.stringify(cfg));
+      renderAdminPanel();
+      toast('超管密码改好了');
     });
     return;
   }
@@ -2579,16 +3115,27 @@ document.addEventListener('click', function (e) {
 /* ============================================================
    启动
    ============================================================ */
-function ensureSuper() {
-  var arr = users();
-  if (!arr.length) return;
-  var has = arr.some(function (x) { return x.role === 'super'; });
-  if (!has) {
-    arr.sort(function (a, b) { return (a.joined || 0) - (b.joined || 0); });
-    arr.forEach(function (x) { x.role = 'member'; });
-    arr[0].role = 'super';
-    saveUsers(arr);
+/* 超管密码：默认 cz1092，超管可在管理面板里改 */
+var DEFAULT_ADMIN_PASS = 'cz1092';
+function adminPass() {
+  var cfg = jget('tg_cfg', {});
+  return cfg.adminPass || DEFAULT_ADMIN_PASS;
+}
+function ensureAdmin() {
+  var cfg = jget('tg_cfg', {});
+  if (!cfg.adminPass) {
+    cfg.adminPass = DEFAULT_ADMIN_PASS;
+    sw('tg_cfg', JSON.stringify(cfg));
   }
+}
+/* 老数据修补：把多余的超管降级，只留最早的一个 */
+function fixRoles() {
+  var arr = users();
+  var sups = arr.filter(function (x) { return x.role === 'super'; });
+  if (sups.length <= 1) return;
+  sups.sort(function (a, b) { return (a.joined || 0) - (b.joined || 0); });
+  sups.forEach(function (x, i) { if (i > 0) x.role = 'member'; });
+  saveUsers(arr);
 }
 
 function showFromBar() {
@@ -2603,7 +3150,7 @@ function showFromBar() {
 }
 
 function boot() {
-  ensureSuper();
+  ensureAdmin(); fixRoles();
   showFromBar();
   renderAccounts();
   var u = curUser();
