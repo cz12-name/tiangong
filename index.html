@@ -945,7 +945,8 @@ body.lite .pane.on{animation:none}
       <div class="card-h"><b>🔑 超管入口</b><span>要密码</span></div>
       <p style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:12px">
         只有知道超管密码的人才能管理天宫。</p>
-      <button class="btn ghost" id="btnAdminLogin">输 入 超 管 密 码</button>
+      <button class="btn ghost" id="btnAdminLogin" style="margin-bottom:9px">输 入 超 管 密 码</button>
+      <button class="btn ghost" id="btnResetPass" style="color:#b98a8a;font-size:12px">忘记密码？重置超管</button>
     </div>
 
     <div class="card" id="adminCard" style="display:none">
@@ -1455,6 +1456,7 @@ function doLogin() {
   for (var i = 0; i < arr.length; i++) if (arr[i].name === name) u = arr[i];
 
   if (u) {
+    if (u.banned) { toast('这个账号被停用了，找超管'); return; }
     if (u.pass !== pass) { toast('密码不对'); return; }
   } else {
     u = {
@@ -3282,19 +3284,68 @@ document.addEventListener('click', function (e) {
 });
 
 /* ---------- 超管登录 ---------- */
+function becomeSuper() {
+  var arr = users(), me = curUser();
+  if (!me) return;
+  var old = null;
+  arr.forEach(function (x) {
+    if (x.role === 'super' && x.id !== me.id) old = x;
+    if (x.id === me.id) x.role = 'super';
+    else if (x.role === 'super') x.role = 'member';
+  });
+  saveUsers(arr);
+  audit(me.name + ' 成为超管' + (old ? '（接替 ' + old.name + '）' : ''));
+  renderHead(); renderAll();
+  toast('你现在是超管了 👑');
+}
+
 document.getElementById('btnAdminLogin').onclick = function () {
-  askInput('超管密码', [{ ph: '输入超管密码', type: 'password' }], function (v) {
+  var left = lockLeft();
+  if (left > 0) {
+    toast('锁住了，还要等 ' + Math.ceil(left / 60000) + ' 分钟');
+    return;
+  }
+
+  var first = !hasAdminPass();
+
+  askInput(first ? '设一个超管密码' : '输入超管密码', [
+    { ph: first ? '新密码（至少 4 位，别告诉别人）' : '超管密码', type: 'password' }
+  ], function (v) {
     var p = (v[0] || '').trim();
     if (!p) return false;
-    if (p !== adminPass()) { toast('密码不对'); return false; }
-    var arr = users(), me = curUser();
-    arr.forEach(function (x) {
-      if (x.id === me.id) x.role = 'super';
-      else if (x.role === 'super') x.role = 'member';
-    });
+
+    if (first) {
+      if (p.length < 4) { toast('至少 4 位'); return false; }
+      setAdminPass(p);
+      becomeSuper();
+      modal('🔑 密码设好了',
+        '<div class="pre" style="font-size:12px">你的超管密码已经设好了。\n\n' +
+        '· 代码里没有存明文，只有一串看不懂的哈希\n' +
+        '· 别人看源码也拿不到你的密码\n' +
+        '· 忘了只能重置（会清掉超管身份）\n\n' +
+        '记在备忘录里。</div>');
+      return;
+    }
+
+    if (!checkAdminPass(p)) { toast(onFail()); return false; }
+    onSuccess();
+    becomeSuper();
+  });
+};
+
+/* 忘记超管密码：重置 */
+document.getElementById('btnResetPass').onclick = function () {
+  confirmBox('重置后就没有超管了，谁先设密码谁当。\n你的账号和数据都还在。', function () {
+    var c = cfgGet();
+    delete c.adminHash;
+    delete c.adminPass;
+    c.fail = 0; c.lockUntil = 0;
+    cfgSet(c);
+    var arr = users();
+    arr.forEach(function (x) { x.role = 'member'; });
     saveUsers(arr);
     renderHead(); renderAll();
-    toast('你现在是超管了 👑');
+    toast('超管密码已重置，重新设一个吧');
   });
 };
 
@@ -3472,6 +3523,9 @@ function renderAdminPanel() {
   var cfg = jget('tg_cfg', {});
   var h = '';
 
+  h += '<div style="font-size:10.5px;color:#6f6493;line-height:1.7;margin-bottom:14px">' +
+    '⚠️ 这里的"天宫"是这台设备上的。别的手机会有各自的一份，' +
+    '你管不到他们那边。</div>';
   h += '<div class="adm-sec">👥 成员 · ' + us.length + ' 人</div>';
   us.forEach(function (x) {
     h += '<div class="adm-row">' +
@@ -3479,6 +3533,8 @@ function renderAdminPanel() {
       '<div class="am"><b>' + esc(x.name) +
         (x.role === 'super' ? '<span class="crown">超管</span>' : '') + '</b>' +
       '<span>Lv.' + lvOf(x.exp || 0).lv + ' · ' + (x.exp || 0) + ' 经验' +
+        ' · ' + (x.coins || 0) + ' 币' +
+        (x.banned ? ' · <b style="color:#ff9d9d">已停用</b>' : '') +
         (x.inviter ? ' · 由 ' + esc(x.inviter) + ' 邀请' : '') + '</span></div>' +
       '<div class="ab" data-adm-edit="' + x.id + '">✏️</div>' +
       (x.id === me.id ? '' : '<div class="ab" data-adm-del="' + x.id + '">🗑</div>') +
@@ -3487,14 +3543,31 @@ function renderAdminPanel() {
 
   h += '<div class="adm-sec">🔑 超管密码</div>';
   h += '<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">' +
-    '<span style="font-size:12px;color:#c9c0e6">当前：<b style="color:#e8c86a">' +
-    esc(adminPass()) + '</b></span>' +
-    '<button class="mini2" data-adm-pass="1" style="margin-left:auto">修改</button></div>';
+    '<span style="font-size:12px;color:#c9c0e6">' +
+    (hasAdminPass() ? '已设置 <b style="color:#9bf0b4">✓</b> <span style="color:#6f6493;font-size:10.5px">哈希存储，看不出原文</span>'
+                    : '<span style="color:#ff9d9d">还没设置</span>') + '</span>' +
+    '<button class="mini2" data-adm-pass="1" style="margin-left:auto">' +
+    (hasAdminPass() ? '改密码' : '设置') + '</button></div>';
+
+  var who = users().filter(function (x) { return x.role === 'super'; })[0];
+  h += '<div style="font-size:11.5px;color:#8a7fb0;margin-bottom:12px">当前超管：' +
+    (who ? '<b style="color:#e8c86a">' + esc(who.name) + '</b>' : '（没有人）') + '</div>';
 
   h += '<div class="adm-sec">📯 首页公告</div>';
   h += '<div style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:10px;' +
     'white-space:pre-line">' + esc(cfg.notice || '（还没设置，用默认的）') + '</div>';
   h += '<button class="mini2" data-adm-notice="1">✏️ 修改公告</button>';
+
+  var au = jget('tg_audit', []);
+  if (au.length) {
+    h += '<div class="adm-sec">📋 管理日志</div>';
+    au.slice(0, 6).forEach(function (x) {
+      h += '<div style="display:flex;justify-content:space-between;gap:8px;' +
+        'padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px">' +
+        '<span style="color:#c9c0e6">' + esc(x.text) + '</span>' +
+        '<span style="color:#6f6493;flex-shrink:0">' + fmtTime(x.t) + '</span></div>';
+    });
+  }
 
   h += '<div class="adm-sec">💬 聊天 · ' + msgs().length + ' 条</div>';
   h += '<button class="mini2 danger" data-adm-clearmsg="1">清空所有聊天</button>';
@@ -3521,13 +3594,17 @@ function editMember(id) {
   askInput('修改成员', [
     { ph: '名字', val: m.name },
     { ph: '经验值', val: m.exp || 0, type: 'number' },
-    { ph: '超管：填 1 是，填 0 不是', val: m.role === 'super' ? '1' : '0', type: 'number' }
+    { ph: '超管：1 是 / 0 不是', val: m.role === 'super' ? '1' : '0', type: 'number' },
+    { ph: '天宫币', val: m.coins || 0, type: 'number' },
+    { ph: '停用这个账号？1 停用 / 0 正常', val: m.banned ? '1' : '0', type: 'number' }
   ], function (v) {
     if (!v[0]) { toast('名字不能空'); return false; }
     var dup = arr.some(function (x) { return x.id !== id && x.name === v[0]; });
     if (dup) { toast('已经有同名的人了'); return false; }
     m.name = v[0];
     m.exp = Math.max(0, parseInt(v[1], 10) || 0);
+    m.coins = Math.max(0, parseInt(v[3], 10) || 0);
+    m.banned = v[4] === '1';
     var wantSuper = v[2] === '1';
     if (wantSuper) {
       arr.forEach(function (x) { x.role = 'member'; });
@@ -3567,12 +3644,12 @@ document.addEventListener('click', function (e) {
 
   var ap = e.target.closest('[data-adm-pass]');
   if (ap) {
-    askInput('修改超管密码', [{ ph: '新的超管密码（至少 4 位）', type: 'password' }], function (v) {
+    askInput(hasAdminPass() ? '改超管密码' : '设置超管密码',
+      [{ ph: '新密码（至少 4 位）', type: 'password' }], function (v) {
       var p = (v[0] || '').trim();
       if (p.length < 4) { toast('至少 4 位'); return false; }
-      var cfg = jget('tg_cfg', {});
-      cfg.adminPass = p;
-      sw('tg_cfg', JSON.stringify(cfg));
+      setAdminPass(p);
+      audit((curUser() || {}).name + ' 改了超管密码');
       renderAdminPanel();
       toast('超管密码改好了');
     });
@@ -3618,18 +3695,86 @@ document.addEventListener('click', function (e) {
 /* ============================================================
    启动
    ============================================================ */
-/* 超管密码：默认 cz1092，超管可在管理面板里改 */
-var DEFAULT_ADMIN_PASS = 'cz1092';
-function adminPass() {
-  var cfg = jget('tg_cfg', {});
-  return cfg.adminPass || DEFAULT_ADMIN_PASS;
-}
-function ensureAdmin() {
-  var cfg = jget('tg_cfg', {});
-  if (!cfg.adminPass) {
-    cfg.adminPass = DEFAULT_ADMIN_PASS;
-    sw('tg_cfg', JSON.stringify(cfg));
+/* ============================================================
+   超管密码：代码里没有任何默认密码
+   - 第一次由某个人自己设，设的人自动成为超管
+   - 之后只存哈希，看源码也看不出原密码
+   - 连错 5 次锁 5 分钟
+   ============================================================ */
+function hashPass(p) {
+  var h = 5381;
+  var str = 'tg$' + String(p) + '#tiangong';
+  for (var r = 0; r < 3000; r++) {
+    for (var i = 0; i < str.length; i++) {
+      h = (((h << 5) + h) ^ (str.charCodeAt(i) + r)) >>> 0;
+    }
+    h = (h * 2654435761) >>> 0;
   }
+  return ('0000000' + h.toString(16)).slice(-8) +
+         ('0000000' + ((h ^ 0x9e3779b9) >>> 0).toString(16)).slice(-8);
+}
+
+function cfgGet() { return jget('tg_cfg', {}); }
+function cfgSet(c) { sw('tg_cfg', JSON.stringify(c)); }
+
+function hasAdminPass() {
+  var c = cfgGet();
+  return !!(c.adminHash || c.adminPass);
+}
+function checkAdminPass(p) {
+  var c = cfgGet();
+  if (c.adminHash) return hashPass(p) === c.adminHash;
+  if (c.adminPass) return String(p) === String(c.adminPass);  // 兼容旧数据
+  return false;
+}
+function setAdminPass(p) {
+  var c = cfgGet();
+  c.adminHash = hashPass(p);
+  delete c.adminPass;
+  c.fail = 0;
+  c.lockUntil = 0;
+  cfgSet(c);
+}
+
+/* 连错锁定 */
+function lockLeft() {
+  var c = cfgGet();
+  var u = c.lockUntil || 0;
+  return Math.max(0, u - Date.now());
+}
+function onFail() {
+  var c = cfgGet();
+  c.fail = (c.fail || 0) + 1;
+  if (c.fail >= 5) {
+    c.lockUntil = Date.now() + 5 * 60 * 1000;
+    c.fail = 0;
+    cfgSet(c);
+    return '错太多次了，锁 5 分钟';
+  }
+  cfgSet(c);
+  return '密码不对（还能试 ' + (5 - c.fail) + ' 次）';
+}
+function onSuccess() {
+  var c = cfgGet();
+  c.fail = 0; c.lockUntil = 0;
+  cfgSet(c);
+}
+
+/* 旧数据迁移：明文密码转哈希 */
+function ensureAdmin() {
+  var c = cfgGet();
+  if (c.adminPass && !c.adminHash) {
+    c.adminHash = hashPass(c.adminPass);
+    delete c.adminPass;
+    cfgSet(c);
+  }
+}
+
+/* 记录是谁成为了超管 */
+function audit(text) {
+  var a = jget('tg_audit', []);
+  a.unshift({ t: Date.now(), by: (curUser() || {}).name || '?', text: text });
+  sw('tg_audit', JSON.stringify(a.slice(0, 80)));
 }
 /* 老数据修补：把多余的超管降级，只留最早的一个 */
 function fixRoles() {
