@@ -1457,8 +1457,22 @@ function doLogin() {
 
   if (u) {
     if (u.banned) { toast('这个账号被停用了，找超管'); return; }
-    if (u.pass !== pass) { toast('密码不对'); return; }
+    if (u.pass !== pass) {
+      toast('「' + name + '」已经有人用了');
+      return;
+    }
   } else {
+    // 新注册：名字、密码都不能和别人重复
+    if (name.length < 2) { toast('名字至少 2 个字'); return; }
+    if (name.length > 12) { toast('名字最多 12 个字'); return; }
+    var taken = null;
+    for (var j = 0; j < arr.length; j++) {
+      if (arr[j].pass === pass) { taken = arr[j].name; break; }
+    }
+    if (taken) {
+      toast('这个密码「' + taken + '」已经在用了，换一个');
+      return;
+    }
     u = {
       id: uid('u'), name: name, pass: pass,
       exp: 20, joined: Date.now(), lastSign: '', signDays: 0,
