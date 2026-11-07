@@ -768,7 +768,7 @@ body.lite .pane.on{animation:none}
         <span class="lvbadge" style="background:rgba(255,200,80,.22);border-color:rgba(255,200,80,.45);color:#ffd36a">
           💰 <b id="heroCoin">0</b> 天宫币</span>
       </div>
-      <button class="signin" id="btnSign">📅 今日签到 +10 经验</button>
+      <button class="signin" id="btnSign">📅 今日签到（经验+天宫币）</button>
     </div>
 
     <div class="card">
@@ -956,6 +956,15 @@ body.lite .pane.on{animation:none}
       <button class="btn" id="btnAdmin">打 开 管 理 面 板</button>
     </div>
 
+    <div class="card" id="luckCard">
+      <div class="card-h"><b>🎰 幸运天宫币</b><span id="luckHint">每天免费 1 次</span></div>
+      <div style="text-align:center;font-size:13px;color:#c9c0e6;line-height:1.9;margin-bottom:10px">
+        转一次，随机掉 <b style="color:#ffd36a">1~20</b> 枚天宫币。<br>
+        每天 1 次免费，之后花 5 币再转。
+      </div>
+      <button class="btn" id="btnLuck" style="width:100%">🎲 转 一 次</button>
+    </div>
+
     <div class="card">
       <div class="card-h"><b>🎖️ 我的成就</b><span id="achCount">0 / 12</span></div>
       <div class="ach" id="achBox"></div>
@@ -998,6 +1007,11 @@ body.lite .pane.on{animation:none}
         <button class="btn ghost" id="btnPack" style="flex:1">📦 生成搬家码</button>
         <button class="btn ghost" id="btnUnpack" style="flex:1">📥 粘贴恢复</button>
       </div>
+      <div style="display:flex;gap:9px;margin-bottom:10px">
+        <button class="btn ghost" id="btnExport" style="flex:1">💾 导出备份</button>
+        <button class="btn ghost" id="btnImport" style="flex:1">📤 导入备份</button>
+      </div>
+      <input type="file" id="bakIn" accept="application/json,.json" style="display:none">
       <button class="btn ghost" id="btnLogout" style="margin-bottom:10px">退出登录</button>
       <button class="btn ghost" id="btnHealth" style="margin-bottom:10px">🩺 存储体检</button>
       <button class="btn ghost" id="btnSlim" style="margin-bottom:10px">🧹 瘦身（清掉旧消息和旧帖子）</button>
@@ -1565,7 +1579,7 @@ function renderHead() {
     var signed = u.lastSign === todayStr();
     sb.textContent = signed
       ? ('✅ 今天已签到 · 连签 ' + (u.signDays || 1) + ' 天')
-      : '📅 今日签到 +10 经验';
+: '📅 今日签到（经验+天宫币）';
     sb.classList.toggle('ok', signed);
   }
 }
@@ -2122,14 +2136,17 @@ function doSign() {
   var y = new Date();
   y.setDate(y.getDate() - 1);
   var ystr = y.getFullYear() + '-' + pad2(y.getMonth() + 1) + '-' + pad2(y.getDate());
-  u.signDays = (u.lastSign === ystr) ? ((u.signDays || 0) + 1) : 1;
+  var dayN = (u.lastSign === ystr) ? ((u.signDays || 0) + 1) : 1;
+  u.signDays = dayN;
   u.lastSign = t;
-  var gain = 10 + (u.signDays >= 7 ? 20 : 0);
+  var gain = 10 + (dayN >= 7 ? 20 : 0);
+  var coinGain = 2 + Math.min(dayN, 8);
   u.exp = (u.exp || 0) + gain;
+  u.coins = (u.coins || 0) + coinGain;
   saveUser(u);
   renderAll();
-  pushAct('📅', u.name + ' 签到成功（连签 ' + u.signDays + ' 天）');
-  toast('签到成功 +' + gain + ' 经验' + (u.signDays >= 7 ? '　连签 7 天奖励！' : ''));
+  pushAct('📅', u.name + ' 签到成功（连签 ' + dayN + ' 天）');
+  toast('签到成功 +' + gain + ' 经验 +' + coinGain + ' 币' + (dayN >= 7 ? '　连签 7 天！' : ''));
 }
 document.getElementById('btnSign').onclick = doSign;
 
@@ -3811,10 +3828,111 @@ function showFromBar() {
   }
 }
 
+
+/* ============================================================
+   数据备份与恢复（防丢核心）
+   ============================================================ */
+function _snap() {
+  return {
+    v: 3, t: Date.now(), app: 'tiangong',
+    users: jget(K_USERS, []), cfg: jget('tg_cfg', {}),
+    msgs: jget(K_MSGS, []), posts: jget('tg_posts', []),
+    subs: jget('tg_subs', []), orders: jget('tg_orders', []),
+    acts: jget('tg_acts', []), cases: jget('tg_cases', []),
+    audit: jget('tg_audit', []), moods: jget('tg_moods', [])
+  };
+}
+function backupAll() {
+  try { sw('tg_backup', JSON.stringify(_snap())); } catch (e) {}
+}
+function restoreFromObj(d) {
+  try {
+    if (!d || !Array.isArray(d.users)) return false;
+    saveUsers(d.users || []);
+    if (d.cfg) sw('tg_cfg', JSON.stringify(d.cfg));
+    if (d.msgs) saveMsgs(d.msgs);
+    if (d.posts) savePosts(d.posts);
+    if (d.subs) saveSubs(d.subs);
+    if (d.orders) saveOrders(d.orders);
+    if (d.acts) sw('tg_acts', JSON.stringify(d.acts));
+    if (d.cases) sw('tg_cases', JSON.stringify(d.cases));
+    if (d.audit) sw('tg_audit', JSON.stringify(d.audit));
+    if (d.moods) sw('tg_moods', JSON.stringify(d.moods));
+    cacheClear();
+    return true;
+  } catch (e) { return false; }
+}
+function restoreFromBackup() {
+  try {
+    var d = jget('tg_backup', null);
+    return restoreFromObj(d);
+  } catch (e) { return false; }
+}
+function exportBackup() {
+  try {
+    var blob = new Blob([JSON.stringify(_snap(), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    var d = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = '天宫备份_' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { try { document.body.removeChild(a); URL.revokeObjectURL(a.href); } catch (x) {} }, 800);
+    toast('备份文件已下载到手机');
+  } catch (e) { toast('导出失败'); }
+}
+function importBackupFile(file) {
+  if (!file) return;
+  var rd = new FileReader();
+  rd.onload = function () {
+    try {
+      var d = JSON.parse(rd.result);
+      if (!d || !Array.isArray(d.users)) { toast('不是天宫备份文件'); return; }
+      confirmBox('导入会用备份覆盖本机现在的天宫数据，确定？', function () {
+        if (restoreFromObj(d)) {
+          backupAll(); renderAccounts(); renderAll();
+          try { loadDocs(); } catch (x) {}
+          toast('导入成功，重新打开看看');
+        } else toast('导入失败');
+      });
+    } catch (e) { toast('读不出来，文件可能坏了'); }
+  };
+  rd.readAsText(file);
+}
+
+/* ============================================================
+   幸运天宫币（每天免费 1 次，之后花 5 币）
+   ============================================================ */
+function doLuck() {
+  var u = curUser(); if (!u) return;
+  var t = todayStr();
+  var freeLeft = (u.lastLucky === t) ? 0 : 1;
+  var cost = freeLeft ? 0 : 5;
+  if (cost && (u.coins || 0) < cost) { toast('天宫币不够（要 ' + cost + ' 枚）'); return; }
+  if (cost) u.coins = (u.coins || 0) - cost;
+  u.lastLucky = t;
+  var gain = 1 + Math.floor(Math.random() * 20); /* 1~20 */
+  u.coins = (u.coins || 0) + gain;
+  saveUser(u);
+  renderAll();
+  pushAct('🎰', u.name + ' 转幸运盘，+' + gain + ' 币');
+  toast('🎉 转出 ' + gain + ' 枚天宫币' + (cost ? '（花 5 币）' : '（免费）'));
+}
+
+/* 绑定新按钮 */
+try {
+  document.getElementById('btnExport').onclick = exportBackup;
+  document.getElementById('btnImport').onclick = function () { document.getElementById('bakIn').click(); };
+  document.getElementById('bakIn').onchange = function (e) { if (e.target.files[0]) importBackupFile(e.target.files[0]); e.target.value = ''; };
+  document.getElementById('btnLuck').onclick = doLuck;
+} catch (e) {}
+
 function boot() {
   rescueIfNeeded();
   sanitize();
   ensureAdmin(); fixRoles();
+  if (UID && !curUser()) {
+    if (restoreFromBackup() && curUser()) { toast('已用本机备份找回账号'); }
+  }
   showFromBar();
   renderAccounts();
   var u = curUser();
@@ -3827,6 +3945,7 @@ function boot() {
   document.getElementById('app').classList.add('on');
   renderAll();
   loadDocs();
+  backupAll();
 
   var lastFx = parseInt(st('tg_fx') || '0', 10);
   if (Date.now() - lastFx > 3600000) {
