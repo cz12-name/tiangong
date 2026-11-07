@@ -1124,6 +1124,7 @@ body.lite .pane.on{animation:none}
    ============================================================ */
 
 var INVITE = '1092';
+var APP_VER = 10;
 var QUOTES = [
   '让他说完，说出依据第几条，给他不服就重判的机会。',
   '吵架本身不算违规，骂人才算。',
@@ -1216,6 +1217,7 @@ function avatarOf(u) {
   if (u.avatar) return u.avatar;
   return u.name ? u.name.slice(0, 1) : '?';
 }
+function dailyKey(uid) { return 'tg_daily_' + (uid || ''); }
 function esc(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -1576,7 +1578,7 @@ function renderHead() {
 
   var sb = document.getElementById('btnSign');
   if (sb) {
-    var signed = u.lastSign === todayStr();
+    var signed = (u.lastSign === todayStr()) || (jget(dailyKey(u.id || ''), '') === todayStr());
     sb.textContent = signed
       ? ('✅ 今天已签到 · 连签 ' + (u.signDays || 1) + ' 天')
 : '📅 今日签到（经验+天宫币）';
@@ -2132,13 +2134,14 @@ function doSign() {
   var u = curUser();
   if (!u) return;
   var t = todayStr();
-  if (u.lastSign === t) { toast('今天已经签过啦'); return; }
+  if ((u.lastSign === t) || (jget(dailyKey(u.id), '') === t)) { toast('今天已经签过啦'); return; }
   var y = new Date();
   y.setDate(y.getDate() - 1);
   var ystr = y.getFullYear() + '-' + pad2(y.getMonth() + 1) + '-' + pad2(y.getDate());
   var dayN = (u.lastSign === ystr) ? ((u.signDays || 0) + 1) : 1;
   u.signDays = dayN;
   u.lastSign = t;
+  sw(dailyKey(u.id), t);
   var gain = 10 + (dayN >= 7 ? 20 : 0);
   var coinGain = 2 + Math.min(dayN, 8);
   u.exp = (u.exp || 0) + gain;
@@ -3905,11 +3908,12 @@ function importBackupFile(file) {
 function doLuck() {
   var u = curUser(); if (!u) return;
   var t = todayStr();
-  var freeLeft = (u.lastLucky === t) ? 0 : 1;
+  var freeLeft = ((u.lastLucky === t) || (jget(dailyKey(u.id) + '_lk', '') === t)) ? 0 : 1;
   var cost = freeLeft ? 0 : 5;
   if (cost && (u.coins || 0) < cost) { toast('天宫币不够（要 ' + cost + ' 枚）'); return; }
   if (cost) u.coins = (u.coins || 0) - cost;
   u.lastLucky = t;
+  if (freeLeft) sw(dailyKey(u.id) + '_lk', t);
   var gain = 1 + Math.floor(Math.random() * 20); /* 1~20 */
   u.coins = (u.coins || 0) + gain;
   saveUser(u);
@@ -3926,6 +3930,29 @@ try {
   document.getElementById('btnLuck').onclick = doLuck;
 } catch (e) {}
 
+
+/* ============================================================
+   自动更新检测：固定网址也能拿到新版，不用手改 ?v
+   ============================================================ */
+function checkUpdate() {
+  try {
+    fetch('version.txt?_=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var v = parseInt((t || '').trim(), 10);
+        if (!v || isNaN(v)) return;
+        if (v > APP_VER) {
+          var k = 'tg_upd_' + v, done = false;
+          try { done = sessionStorage.getItem(k) === '1'; } catch (e) {}
+          if (done) { toast('🆕 有新版本，下拉刷新一下页面'); return; }
+          try { sessionStorage.setItem(k, '1'); } catch (e) {}
+          toast('🎉 发现新版本，正在刷新…');
+          setTimeout(function () { try { location.reload(true); } catch (e) {} }, 900);
+        }
+      })
+      .catch(function () {});
+  } catch (e) {}
+}
 function boot() {
   rescueIfNeeded();
   sanitize();
@@ -3952,6 +3979,7 @@ function boot() {
     playEnter(u.name, avatarOf(u));
     sw('tg_fx', String(Date.now()));
   }
+  checkUpdate();
 }
 
 /* 输入框聚焦时滚动到视野中间，避免被键盘挡住 */
@@ -3992,6 +4020,7 @@ try {
       '启动时出了点问题<br><span style="font-size:11px;color:#8a7fb0">下拉刷新一次试试</span></div>';
   } catch (x) {}
 }
+setInterval(function () { try { checkUpdate(); } catch (e) {} }, 180000);
 hideBoot();
 </script>
 </body>
