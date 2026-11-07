@@ -1135,7 +1135,7 @@ body.lite .pane.on{animation:none}
    ============================================================ */
 
 var INVITE = '1092';
-var APP_VER = 11;
+var APP_VER = 12;
 var QUOTES = [
   '让他说完，说出依据第几条，给他不服就重判的机会。',
   '吵架本身不算违规，骂人才算。',
@@ -3354,6 +3354,16 @@ document.getElementById('btnAdminLogin').onclick = function () {
 
   var first = !hasAdminPass();
 
+  if (first) {
+    var me = curUser();
+    var sup = null;
+    users().forEach(function (x) { if (x.role === 'super' && (!me || x.id !== me.id)) sup = x; });
+    if (sup) {
+      toast('超管是「' + sup.name + '」，你设不了密码');
+      return;
+    }
+  }
+
   askInput(first ? '设一个超管密码' : '输入超管密码', [
     { ph: first ? '新密码（至少 4 位，别告诉别人）' : '超管密码', type: 'password' }
   ], function (v) {
@@ -3379,19 +3389,31 @@ document.getElementById('btnAdminLogin').onclick = function () {
   });
 };
 
-/* 忘记超管密码：重置 */
+/* 重置超管：有超管就锁死；只有设备上完全没有超管时才允许找回 */
 document.getElementById('btnResetPass').onclick = function () {
-  confirmBox('重置后就没有超管了，谁先设密码谁当。\n你的账号和数据都还在。', function () {
+  var me = curUser();
+  if (!me) { toast('先登录'); return; }
+  var sup = null;
+  users().forEach(function (x) {
+    if (x.role === 'super' && x.id !== me.id) sup = x;
+  });
+  if (sup) {
+    toast('超管是「' + sup.name + '」，你没权限重置它');
+    return;
+  }
+  if (me.role === 'super') {
+    toast('你自己就是超管，直接进管理面板改密码就行');
+    return;
+  }
+  confirmBox('这台设备上现在没有别的超管。\n重置后你可以点「超管入口」设一个密码成为超管。', function () {
     var c = cfgGet();
     delete c.adminHash;
     delete c.adminPass;
     c.fail = 0; c.lockUntil = 0;
     cfgSet(c);
-    var arr = users();
-    arr.forEach(function (x) { x.role = 'member'; });
-    saveUsers(arr);
+    audit(me.name + ' 发起了超管重置（设备无超管）');
     renderHead(); renderAll();
-    toast('超管密码已重置，重新设一个吧');
+    toast('已重置，点「超管入口」设密码');
   });
 };
 
