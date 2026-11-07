@@ -1,7 +1,7 @@
 /* 天宫 service worker：
    动态内容（首页 / 版本号）永远走网络，不缓存 —— 保证固定网址能自动拿到最新版；
    静态资源（图标 / manifest）缓存优先，断网也能用。 */
-var CACHE = 'tiangong-v12';
+var CACHE = 'tiangong-v13';
 var ASSETS = ['./manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
