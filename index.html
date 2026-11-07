@@ -1027,6 +1027,7 @@ body.lite .pane.on{animation:none}
       <button class="btn ghost" id="btnHealth" style="margin-bottom:10px">🩺 存储体检</button>
       <button class="btn ghost" id="btnSlim" style="margin-bottom:10px">🧹 瘦身（清掉旧消息和旧帖子）</button>
       <button class="btn ghost" id="btnLite" style="margin-bottom:10px">⚡ 省电模式（关掉动效）</button>
+      <button class="btn ghost" id="btnDeleteAcc" style="color:#ff8a8a;margin-bottom:10px">🚪 注销我的账户</button>
       <button class="btn ghost" id="btnReset" style="color:#e88">清空本机天宫数据</button>
       <div style="text-align:center;margin-top:16px;font-size:10.5px;color:#5f5680;line-height:1.9">
         天宫 v3 · 数据存在这台设备上<br>
@@ -1135,7 +1136,7 @@ body.lite .pane.on{animation:none}
    ============================================================ */
 
 var INVITE = '1092';
-var APP_VER = 12;
+var APP_VER = 13;
 var QUOTES = [
   '让他说完，说出依据第几条，给他不服就重判的机会。',
   '吵架本身不算违规，骂人才算。',
@@ -1206,10 +1207,24 @@ var _storeFull = false;
 var UID = st(K_SESS) || '';
 
 function users() {
-  var a = cacheGet(K_USERS, []);
+  var a = cacheGet(K_USERS, null);
+  if (!Array.isArray(a) || !a.length) {
+    // 主数据空了或坏了：从备份救回来
+    try {
+      var b = JSON.parse(localStorage.getItem('tg_users_bak') || 'null');
+      if (Array.isArray(b) && b.length) {
+        _C[K_USERS] = b;
+        try { localStorage.setItem(K_USERS, JSON.stringify(b)); } catch (e) {}
+        return b;
+      }
+    } catch (e) {}
+  }
   return Array.isArray(a) ? a : [];
 }
-function saveUsers(a) { cacheSet(K_USERS, a); }
+function saveUsers(a) {
+  cacheSet(K_USERS, a);
+  try { localStorage.setItem('tg_users_bak', JSON.stringify(a)); } catch (e) {}
+}
 function curUser() {
   var a = users();
   for (var i = 0; i < a.length; i++) if (a[i].id === UID) return a[i];
@@ -1229,6 +1244,12 @@ function avatarOf(u) {
   return u.name ? u.name.slice(0, 1) : '?';
 }
 function dailyKey(uid) { return 'tg_daily_' + (uid || ''); }
+function normName(s) {
+  return String(s || '').replace(/\s+/g, '')
+    .replace(/[\uFF01-\uFF5E]/g, function (ch) {
+      return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+    }).toLowerCase();
+}
 function esc(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -1480,7 +1501,7 @@ function doLogin() {
   if (code !== INVITE) { toast('邀请码不对'); document.getElementById('gCode').value = ''; return; }
 
   var arr = users(), u = null;
-  for (var i = 0; i < arr.length; i++) if (arr[i].name === name) u = arr[i];
+  for (var i = 0; i < arr.length; i++) if (normName(arr[i].name) === normName(name)) u = arr[i];
 
   if (u) {
     if (u.banned) { toast('这个账号被停用了，找超管'); return; }
@@ -2099,6 +2120,27 @@ document.getElementById('btnLogout').onclick = function () {
   document.getElementById('gate').classList.remove('off');
   document.getElementById('gPass').value = '';
   document.getElementById('gCode').value = '';
+};
+
+document.getElementById('btnDeleteAcc').onclick = function () {
+  var me = curUser();
+  if (!me) { toast('先登录'); return; }
+  confirmBox('⚠️ 重要提醒 ⚠️\n\n注销后，这个账号的天宫币、等级、成就、消息记录会全部消失，无法恢复！\n\n确定要注销「' + me.name + '」吗？', function () {
+    askInput('最后确认：注销账户', [
+      { ph: '输入登录密码确认注销', type: 'password' }
+    ], function (v) {
+      var p = (v[0] || '').trim();
+      if (p !== me.pass) { toast('密码不对，已取消'); return false; }
+      var arr = users().filter(function (x) { return x.id !== me.id; });
+      saveUsers(arr);
+      try { audit(me.name + ' 注销了自己的账户'); } catch (e) {}
+      rm(K_SESS); UID = ''; cacheClear();
+      document.getElementById('app').classList.remove('on');
+      document.getElementById('gate').classList.remove('off');
+      try { renderAccounts(); } catch (e) {}
+      toast('「' + me.name + '」已注销');
+    });
+  }, '⚠️ 危险操作');
 };
 
 document.getElementById('btnReset').onclick = function () {
