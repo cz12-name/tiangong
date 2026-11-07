@@ -998,6 +998,8 @@ body.lite .pane.on{animation:none}
         <button class="btn ghost" id="btnUnpack" style="flex:1">📥 粘贴恢复</button>
       </div>
       <button class="btn ghost" id="btnLogout" style="margin-bottom:10px">退出登录</button>
+      <button class="btn ghost" id="btnHealth" style="margin-bottom:10px">🩺 存储体检</button>
+      <button class="btn ghost" id="btnSlim" style="margin-bottom:10px">🧹 瘦身（清掉旧消息和旧帖子）</button>
       <button class="btn ghost" id="btnLite" style="margin-bottom:10px">⚡ 省电模式（关掉动效）</button>
       <button class="btn ghost" id="btnReset" style="color:#e88">清空本机天宫数据</button>
       <div style="text-align:center;margin-top:16px;font-size:10.5px;color:#5f5680;line-height:1.9">
@@ -1137,7 +1139,18 @@ var LV_TABLE = [
 
 /* ---------- 存储 ---------- */
 function st(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
-function sw(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function sw(k, v) {
+  try { localStorage.setItem(k, v); }
+  catch (e) {
+    if (!_storeFull) {
+      _storeFull = true;
+      try { console.warn('[天宫] 存储写入失败，可能已满'); } catch (x) {}
+      setTimeout(function () {
+        if (typeof toast === 'function') toast('⚠️ 手机存储满了，去「我的」清理一下');
+      }, 1500);
+    }
+  }
+}
 function rm(k) { try { localStorage.removeItem(k); } catch (e) {} }
 function jget(k, dft) {
   try { var v = JSON.parse(st(k)); return v === null || v === undefined ? dft : v; }
@@ -1145,10 +1158,31 @@ function jget(k, dft) {
 }
 
 var K_USERS = 'tg_users', K_SESS = 'tg_sess', K_MSGS = 'tg_msgs';
+
+/* 内存缓存：同一份数据只解析一次，大幅减少卡顿 */
+var _C = {};
+function cacheGet(k, dft) {
+  if (_C[k] === undefined) {
+    var v = jget(k, dft);
+    _C[k] = (v === null || v === undefined) ? dft : v;
+  }
+  return _C[k];
+}
+function cacheSet(k, v) {
+  _C[k] = v;
+  sw(k, JSON.stringify(v));
+}
+function cacheClear() { _C = {}; }
+
+/* 存储写入失败（手机满了）时给个信号 */
+var _storeFull = false;
 var UID = st(K_SESS) || '';
 
-function users() { var a = jget(K_USERS, []); return Array.isArray(a) ? a : []; }
-function saveUsers(a) { sw(K_USERS, JSON.stringify(a)); }
+function users() {
+  var a = cacheGet(K_USERS, []);
+  return Array.isArray(a) ? a : [];
+}
+function saveUsers(a) { cacheSet(K_USERS, a); }
 function curUser() {
   var a = users();
   for (var i = 0; i < a.length; i++) if (a[i].id === UID) return a[i];
@@ -1228,8 +1262,14 @@ function addExp(n, reason) {
 }
 
 /* ---------- 消息 ---------- */
-function msgs() { var a = jget(K_MSGS, []); return Array.isArray(a) ? a : []; }
-function saveMsgs(a) { sw(K_MSGS, JSON.stringify(a.slice(-500))); }
+function msgs() {
+  var a = cacheGet(K_MSGS, []);
+  return Array.isArray(a) ? a : [];
+}
+function saveMsgs(a) {
+  var cut = a.length > 300 ? a.slice(a.length - 300) : a;
+  cacheSet(K_MSGS, cut);
+}
 
 /* ============================================================
    邀请好友
@@ -1429,6 +1469,7 @@ function doLogin() {
   }
   sw(K_SESS, u.id);
   UID = u.id;
+  cacheClear();
   boot();
   pushSysMsg(u);
   playEnter(u.name, avatarOf(u));
@@ -1550,7 +1591,12 @@ function renderMsgs(forceBottom) {
   var superMap = {};
   us.forEach(function (x) { if (x.role === 'super') superMap[x.id] = 1; });
   var lastDay = '';
-  list.forEach(function (m) {
+  var shown = list.length > 120 ? list.slice(list.length - 120) : list;
+  if (list.length > 120) {
+    h += '<div style="text-align:center;font-size:10px;color:#6f6493;margin:6px 0 12px">' +
+      '只显示最近 120 条</div>';
+  }
+  shown.forEach(function (m) {
     var me = m.uid === u.id;
     var dd = new Date(m.t);
     var day = dd.getFullYear() + '-' + pad2(dd.getMonth() + 1) + '-' + pad2(dd.getDate());
@@ -2004,6 +2050,7 @@ document.getElementById('mbOk').onclick = function () {
 
 document.getElementById('btnLogout').onclick = function () {
   rm(K_SESS); UID = '';
+  cacheClear();
   document.getElementById('app').classList.remove('on');
   document.getElementById('gate').classList.remove('off');
   document.getElementById('gPass').value = '';
@@ -2319,10 +2366,13 @@ var MOODS = [
   { e: '😤', t: '想吐槽' }, { e: '🙏', t: '求帮忙' }, { e: '🍜', t: '吃了啥' }
 ];
 
-function posts() { var a = jget('tg_posts', []); return Array.isArray(a) ? a : []; }
+function posts() {
+  var a = cacheGet('tg_posts', []);
+  return Array.isArray(a) ? a : [];
+}
 function savePosts(a) {
-  var cut = a.length > 200 ? a.slice(a.length - 200) : a;
-  sw('tg_posts', JSON.stringify(cut));
+  var cut = a.length > 120 ? a.slice(a.length - 120) : a;
+  cacheSet('tg_posts', cut);
 }
 
 var ACH = [
@@ -2841,20 +2891,35 @@ var DEFAULT_TASKS = [
 var WEEK_NAMES = ['一', '二', '三', '四', '五', '六', '日'];
 
 function tasks() {
-  var a = jget('tg_tasks', null);
+  var a = cacheGet('tg_tasks', null);
   if (!Array.isArray(a)) {
     a = JSON.parse(JSON.stringify(DEFAULT_TASKS));
-    sw('tg_tasks', JSON.stringify(a));
+    cacheSet('tg_tasks', a);
   }
   return a;
 }
-function saveTasks(a) { sw('tg_tasks', JSON.stringify(a)); }
-function subs() { var a = jget('tg_subs', []); return Array.isArray(a) ? a : []; }
-function saveSubs(a) { sw('tg_subs', JSON.stringify(a.slice(-300))); }
-function items() { var a = jget('tg_shop', []); return Array.isArray(a) ? a : []; }
-function saveItems(a) { sw('tg_shop', JSON.stringify(a)); }
-function orders() { var a = jget('tg_orders', []); return Array.isArray(a) ? a : []; }
-function saveOrders(a) { sw('tg_orders', JSON.stringify(a.slice(-200))); }
+function saveTasks(a) { cacheSet('tg_tasks', a); }
+function subs() {
+  var a = cacheGet('tg_subs', []);
+  return Array.isArray(a) ? a : [];
+}
+function saveSubs(a) {
+  var cut = a.length > 150 ? a.slice(a.length - 150) : a;
+  cacheSet('tg_subs', cut);
+}
+function items() {
+  var a = cacheGet('tg_shop', []);
+  return Array.isArray(a) ? a : [];
+}
+function saveItems(a) { cacheSet('tg_shop', a); }
+function orders() {
+  var a = cacheGet('tg_orders', []);
+  return Array.isArray(a) ? a : [];
+}
+function saveOrders(a) {
+  var cut = a.length > 120 ? a.slice(a.length - 120) : a;
+  cacheSet('tg_orders', cut);
+}
 
 function weekDay() { var d = new Date().getDay(); return d === 0 ? 7 : d; }
 function dayText(days) {
@@ -3299,6 +3364,69 @@ document.getElementById('btnLite').onclick = function () {
 };
 
 /* ============================================================
+   存储体检 / 急救
+   ============================================================ */
+function storeBytes() {
+  var total = 0;
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('tg_') === 0) {
+        total += (localStorage.getItem(k) || '').length * 2;
+      }
+    }
+  } catch (e) {}
+  return total;
+}
+function fmtMB(b) {
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+
+document.getElementById('btnHealth').onclick = function () {
+  var used = storeBytes();
+  var rows = [
+    ['账号', users().length + ' 人'],
+    ['消息', msgs().length + ' 条'],
+    ['帖子', posts().length + ' 条'],
+    ['文档', DOCS.length + ' 个'],
+    ['任务提交', subs().length + ' 条'],
+    ['法庭记录', jget('tg_cases', []).length + ' 条']
+  ];
+  var h = '<div class="pre" style="font-size:12px">';
+  h += '本地占用：' + fmtMB(used) + '（浏览器一般给 5 MB）\n\n';
+  rows.forEach(function (r) { h += r[0] + '：' + r[1] + '\n'; });
+  h += '\n如果超过 4 MB，建议点「瘦身」。';
+  h += '</div>';
+  modal('🩺 存储体检', h);
+};
+
+document.getElementById('btnSlim').onclick = function () {
+  var before = storeBytes();
+  confirmBox('会清掉旧消息、旧帖子和旧的提交记录。\n账号、积分、天宫币、任务、商品、法庭记录都保留。', function () {
+    saveMsgs(msgs().slice(-60));
+    savePosts(posts().slice(-30));
+    saveSubs(subs().slice(-40));
+    saveOrders(orders().slice(-30));
+    var after = storeBytes();
+    renderAll();
+    toast('清理完成：' + fmtMB(before) + ' → ' + fmtMB(after));
+  });
+};
+
+/* ?safe=1 急救：只清大件，保账号 */
+function rescueIfNeeded() {
+  try {
+    var q = new URLSearchParams(location.search);
+    if (q.get('safe') === '1') {
+      rm('tg_msgs'); rm('tg_posts'); rm('tg_subs'); rm('tg_orders'); rm('tg_acts');
+      cacheClear();
+      try { history.replaceState({}, '', location.pathname); } catch (e) {}
+      setTimeout(function () { toast('已清理大件数据，账号还在'); }, 1200);
+    }
+  } catch (e) {}
+}
+
+/* ============================================================
    超级管理员
    ============================================================ */
 var ipCb = null;
@@ -3525,6 +3653,7 @@ function showFromBar() {
 }
 
 function boot() {
+  rescueIfNeeded();
   sanitize();
   ensureAdmin(); fixRoles();
   showFromBar();
