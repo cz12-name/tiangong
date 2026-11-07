@@ -965,6 +965,17 @@ body.lite .pane.on{animation:none}
       <button class="btn" id="btnLuck" style="width:100%">🎲 转 一 次</button>
     </div>
 
+    <div class="card" id="gameCard">
+      <div class="card-h"><b>🎮 天宫小游戏</b><span id="gameLeft">今天还能玩 5 次</span></div>
+      <div style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:10px">
+        每局 1 天宫币，赢了有奖。每天最多玩 5 局。
+      </div>
+      <div style="display:flex;gap:9px">
+        <button class="btn ghost" id="btnRPS" style="flex:1">✊ 石头剪刀布</button>
+        <button class="btn ghost" id="btnSnake" style="flex:1">🐍 贪吃蛇</button>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-h"><b>🎖️ 我的成就</b><span id="achCount">0 / 12</span></div>
       <div class="ach" id="achBox"></div>
@@ -1124,7 +1135,7 @@ body.lite .pane.on{animation:none}
    ============================================================ */
 
 var INVITE = '1092';
-var APP_VER = 10;
+var APP_VER = 11;
 var QUOTES = [
   '让他说完，说出依据第几条，给他不服就重判的机会。',
   '吵架本身不算违规，骂人才算。',
@@ -2077,6 +2088,7 @@ document.getElementById('btnLaw').onclick = function () {
 };
 document.getElementById('mbOk').onclick = function () {
   document.getElementById('mBox').classList.remove('on');
+  if (_snTimer) { clearInterval(_snTimer); _snTimer = null; }
   revokeLast();
 };
 
@@ -3953,6 +3965,190 @@ function checkUpdate() {
       .catch(function () {});
   } catch (e) {}
 }
+
+/* ============================================================
+   天宫小游戏（1 币一局，每天最多 5 局）
+   ============================================================ */
+var GAME_MAX = 5;
+var _snTimer = null;
+
+function gameRec() {
+  var u = curUser();
+  if (!u) return { d: todayStr(), n: 0 };
+  var r = jget('tg_game_' + u.id, null);
+  if (!r || r.d !== todayStr()) {
+    r = { d: todayStr(), n: 0 };
+    sw('tg_game_' + u.id, JSON.stringify(r));
+  }
+  return r;
+}
+function gameLeft() { return Math.max(0, GAME_MAX - gameRec().n); }
+function syncGameUI() {
+  var el = document.getElementById('gameLeft');
+  if (el) el.textContent = '今天还能玩 ' + gameLeft() + ' 次';
+}
+function useGame() {
+  var u = curUser();
+  if (!u) return false;
+  var r = gameRec();
+  if (r.n >= GAME_MAX) { toast('今天 5 局玩完了，明天再来'); return false; }
+  if ((u.coins || 0) < 1) { toast('天宫币不够，要 1 枚'); return false; }
+  u.coins = (u.coins || 0) - 1;
+  saveUser(u);
+  r.n += 1;
+  sw('tg_game_' + u.id, JSON.stringify(r));
+  syncGameUI(); renderHead();
+  return true;
+}
+
+/* ---------- 石头剪刀布 ---------- */
+var RPS_ICON = ['✊', '✋', '✌️'];
+function openRPS() {
+  if (!curUser()) return;
+  if (gameLeft() <= 0) { toast('今天 5 局玩完了，明天再来'); return; }
+  if ((curUser().coins || 0) < 1) { toast('天宫币不够，要 1 枚'); return; }
+  modal('✊ 石头剪刀布',
+    '<div style="text-align:center;font-size:12px;color:#c9c0e6;line-height:1.9;margin-bottom:12px">' +
+    '1 币一局 · 赢 +2 币 · 平局退 1 币 · 输不返<br>今天还能玩 ' + gameLeft() + ' 次</div>' +
+    '<div id="rpsOut" style="text-align:center;font-size:32px;min-height:50px;margin-bottom:12px"></div>' +
+    '<div style="display:flex;gap:9px">' +
+    '<button class="btn ghost" data-rps="0" style="flex:1;font-size:22px">✊</button>' +
+    '<button class="btn ghost" data-rps="1" style="flex:1;font-size:22px">✋</button>' +
+    '<button class="btn ghost" data-rps="2" style="flex:1;font-size:22px">✌️</button></div>');
+}
+function doRPS(pick) {
+  var u = curUser();
+  if (!u) return;
+  if (!useGame()) return;
+  var cpu = Math.floor(Math.random() * 3);
+  var playerWins = (pick === 0 && cpu === 2) || (pick === 1 && cpu === 0) || (pick === 2 && cpu === 1);
+  var tie = pick === cpu;
+  var res, col;
+  if (tie) { u.coins = (u.coins || 0) + 1; saveUser(u); res = '平局，退你 1 币'; col = '#c9c0e6'; }
+  else if (playerWins) { u.coins = (u.coins || 0) + 2; saveUser(u); res = '你赢了 +2 币 🎉'; col = '#9bf0b4'; }
+  else { res = '你输了'; col = '#ff9d9d'; }
+  var out = document.getElementById('rpsOut');
+  if (out) out.innerHTML = RPS_ICON[pick] + '<span style="font-size:18px;color:#8a7fb0"> vs </span>' + RPS_ICON[cpu] +
+    '<div style="font-size:14px;margin-top:8px;color:' + col + '">' + res + '</div>';
+  renderHead(); syncGameUI();
+  toast(tie ? '平局' : (playerWins ? '赢啦 +2 币' : '输了，再来一局'));
+}
+
+/* ---------- 贪吃蛇 ---------- */
+function openSnake() {
+  if (!curUser()) return;
+  if (gameLeft() <= 0) { toast('今天 5 局玩完了，明天再来'); return; }
+  if ((curUser().coins || 0) < 1) { toast('天宫币不够，要 1 枚'); return; }
+  modal('🐍 贪吃蛇',
+    '<div style="font-size:11.5px;color:#c9c0e6;line-height:1.8;margin-bottom:8px">' +
+    '1 币一局 · 每吃一个 +1 币（每局最多 8 币）<br>点方向键控制，撞墙或撞到自己就结束。</div>' +
+    '<div style="text-align:center;margin-bottom:8px;font-size:13px">得分 <b id="snScore" style="color:#ffd36a">0</b>' +
+    '　·　今天还能玩 <span id="snLeft">' + gameLeft() + '</span> 次</div>' +
+    '<canvas id="snCv" width="300" height="300" style="width:100%;max-width:300px;height:auto;background:#0d0a1e;border-radius:12px;display:block;margin:0 auto 10px"></canvas>' +
+    '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px">' +
+    '<button class="mini2" data-sn="up" style="min-width:52px">↑</button>' +
+    '<button class="mini2" data-sn="left" style="min-width:52px">←</button>' +
+    '<button class="mini2" data-sn="down" style="min-width:52px">↓</button>' +
+    '<button class="mini2" data-sn="right" style="min-width:52px">→</button></div>' +
+    '<button class="btn" id="snStart" style="width:100%">开 始</button>');
+  bindSnake();
+}
+function bindSnake() {
+  var cv = document.getElementById('snCv');
+  if (!cv) return;
+  var ctx = cv.getContext('2d');
+  var N = 15, cell = 300 / N;
+  var snake, dir, food, score = 0, running = false;
+
+  if (_snTimer) { clearInterval(_snTimer); _snTimer = null; }
+
+  function randFood() {
+    for (var k = 0; k < 400; k++) {
+      var f = { x: Math.floor(Math.random() * N), y: Math.floor(Math.random() * N) };
+      if (!snake.some(function (s) { return s.x === f.x && s.y === f.y; })) return f;
+    }
+    return { x: 0, y: 0 };
+  }
+  function draw() {
+    ctx.fillStyle = '#0d0a1e'; ctx.fillRect(0, 0, 300, 300);
+    ctx.fillStyle = '#ffd36a'; ctx.fillRect(food.x * cell + 2, food.y * cell + 2, cell - 4, cell - 4);
+    for (var i = 0; i < snake.length; i++) {
+      ctx.fillStyle = i === 0 ? '#9bf0b4' : '#6fc3ff';
+      ctx.fillRect(snake[i].x * cell + 1, snake[i].y * cell + 1, cell - 2, cell - 2);
+    }
+  }
+  function reset() {
+    snake = [{ x: 7, y: 7 }, { x: 6, y: 7 }, { x: 5, y: 7 }];
+    dir = { x: 1, y: 0 }; score = 0;
+    food = randFood(); draw();
+    var se = document.getElementById('snScore'); if (se) se.textContent = '0';
+  }
+  function step() {
+    var h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (h.x < 0 || h.x >= N || h.y < 0 || h.y >= N ||
+        snake.some(function (s) { return s.x === h.x && s.y === h.y; })) { end(); return; }
+    snake.unshift(h);
+    if (h.x === food.x && h.y === food.y) {
+      score++;
+      var se = document.getElementById('snScore'); if (se) se.textContent = String(score);
+      food = randFood();
+    } else snake.pop();
+    draw();
+  }
+  function end() {
+    running = false;
+    if (_snTimer) { clearInterval(_snTimer); _snTimer = null; }
+    var gain = Math.min(score, 8);
+    var u = curUser();
+    if (u && gain > 0) { u.coins = (u.coins || 0) + gain; saveUser(u); }
+    renderHead(); syncGameUI();
+    var sl = document.getElementById('snLeft'); if (sl) sl.textContent = String(gameLeft());
+    var b = document.getElementById('snStart'); if (b) b.textContent = '再 玩 一 局';
+    toast('结束！吃到 ' + score + ' 个，得 ' + gain + ' 币');
+  }
+  function start() {
+    if (running) return;
+    if (!useGame()) return;
+    reset(); running = true;
+    var b = document.getElementById('snStart'); if (b) b.textContent = '游戏进行中…';
+    if (_snTimer) clearInterval(_snTimer);
+    _snTimer = setInterval(step, 160);
+  }
+  function setDir(d) {
+    if (!running) { start(); }
+    if (d === 'up' && dir.y === 0) { dir = { x: 0, y: -1 }; return; }
+    if (d === 'down' && dir.y === 0) { dir = { x: 0, y: 1 }; return; }
+    if (d === 'left' && dir.x === 0) { dir = { x: -1, y: 0 }; return; }
+    if (d === 'right' && dir.x === 0) { dir = { x: 1, y: 0 }; return; }
+  }
+  document.querySelectorAll('[data-sn]').forEach(function (b) {
+    b.onclick = function () { setDir(b.getAttribute('data-sn')); };
+  });
+  var sb = document.getElementById('snStart');
+  if (sb) sb.onclick = start;
+  document.onkeydown = function (e) {
+    if (!running) return;
+    if (e.key === 'ArrowUp') setDir('up');
+    else if (e.key === 'ArrowDown') setDir('down');
+    else if (e.key === 'ArrowLeft') setDir('left');
+    else if (e.key === 'ArrowRight') setDir('right');
+  };
+  reset();
+}
+
+/* 绑定游戏入口 + 关闭弹窗时停掉贪吃蛇 */
+try {
+  document.getElementById('btnRPS').onclick = function () {
+    document.getElementById('mBox').classList.add('on');
+    openRPS();
+  };
+  document.getElementById('btnSnake').onclick = function () {
+    document.getElementById('mBox').classList.add('on');
+    openSnake();
+  };
+  document.getElementById('btnLuck2');
+} catch (e) {}
+
 function boot() {
   rescueIfNeeded();
   sanitize();
