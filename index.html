@@ -970,9 +970,10 @@ body.lite .pane.on{animation:none}
       <div style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:10px">
         每局 1 天宫币，赢了有奖。每天最多玩 5 局。
       </div>
-      <div style="display:flex;gap:9px">
-        <button class="btn ghost" id="btnRPS" style="flex:1">✊ 石头剪刀布</button>
-        <button class="btn ghost" id="btnSnake" style="flex:1">🐍 贪吃蛇</button>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn ghost" id="btnRPS" style="flex:1;min-width:96px;font-size:12px">✊ 猜拳</button>
+        <button class="btn ghost" id="btnSnake" style="flex:1;min-width:96px;font-size:12px">🐍 贪吃蛇</button>
+        <button class="btn ghost" id="btn2048" style="flex:1;min-width:96px;font-size:12px">🔢 2048</button>
       </div>
     </div>
 
@@ -989,7 +990,7 @@ body.lite .pane.on{animation:none}
     <div class="card">
       <div class="card-h"><b>💌 邀请好友</b><span>把天宫告诉别人</span></div>
       <div style="font-size:11.5px;color:#9d92c4;line-height:1.9;margin-bottom:12px">
-        微信、QQ 好友都能收到。邀请码统一是 <b style="color:#e8c86a">1092</b>。</div>
+        微信、QQ 好友都能收到。邀请码统一是 <b style="color:#e8c86a" id="inviteShow">1092</b>。</div>
       <button class="btn" id="btnInvite">邀 请 好 友 进 天 宫</button>
     </div>
 
@@ -1076,12 +1077,13 @@ body.lite .pane.on{animation:none}
 
 <div class="modal" id="mReset" style="z-index:360">
   <div class="sheet">
-    <h3>🔑 重置密码</h3>
+    <h3>🔑 修改密码</h3>
     <p style="margin-bottom:14px;font-size:12px;line-height:1.8">
-      输入名字，直接设一个新密码。<br>
-      <span style="color:#ffb0b0">积分、消息、帖子都会保留。</span>
+      要验证旧密码才能改，<span style="color:#ffb0b0">防止别人改你的密码。</span><br>
+      旧密码忘了？找超管在管理面板帮你重置。
     </p>
     <input class="gin" id="rsName" placeholder="你的名字" autocomplete="off">
+    <input class="gin" id="rsOld" type="password" placeholder="旧密码">
     <input class="gin" id="rsPass" type="password" placeholder="新密码（至少 2 位）">
     <div style="display:flex;gap:9px;margin-top:6px">
       <button class="mini2" id="rsCancel" style="flex:1;padding:12px">取 消</button>
@@ -1102,7 +1104,7 @@ body.lite .pane.on{animation:none}
 <div class="modal" id="mInvite">
   <div class="sheet">
     <h3 style="text-align:center">💌 邀请好友</h3>
-    <div class="ivcode">1092</div>
+    <div class="ivcode" id="ivCode">1092</div>
     <p style="text-align:center;font-size:11px;color:#6f6493">天宫邀请码</p>
     <div class="ivtext" id="ivText"></div>
     <button class="ok" id="ivShare" style="margin-top:0">📤 分享给微信 / QQ 好友</button>
@@ -1136,7 +1138,8 @@ body.lite .pane.on{animation:none}
    ============================================================ */
 
 var INVITE = '1092';
-var APP_VER = 13;
+function inviteCode() { var c = jget('tg_cfg', {}); return c.invite || INVITE; }
+var APP_VER = 14;
 var QUOTES = [
   '让他说完，说出依据第几条，给他不服就重判的机会。',
   '吵架本身不算违规，骂人才算。',
@@ -1337,7 +1340,7 @@ function inviteText() {
   var name = u ? u.name : '一位朋友';
   return '我在「天宫小队」等你 🏯\n' +
     '打开这个地址就能进：\n' + baseURL() + '?from=' + encodeURIComponent(name) + '\n\n' +
-    '邀请码：1092';
+    '邀请码：' + inviteCode();
 }
 function fallbackCopy(t) {
   var ta = document.createElement('textarea');
@@ -1387,7 +1390,7 @@ document.getElementById('ivQq').onclick = function () {
   var u = baseURL();
   var share = 'mqqapi://share/to_fri?src_type=web&version=1&file_type=0&share_type=0' +
     '&title=' + encodeURIComponent('天宫小队 邀请你') +
-    '&description=' + encodeURIComponent('邀请码 1092') +
+    '&description=' + encodeURIComponent('邀请码 ' + inviteCode()) +
     '&url=' + encodeURIComponent(u);
   try { location.href = share; } catch (e) {}
   setTimeout(function () {
@@ -1430,11 +1433,12 @@ document.addEventListener('click', function (e) {
 document.getElementById('gForgot').onclick = function () {
   document.getElementById('rsName').value = document.getElementById('gName').value.trim();
   document.getElementById('rsPass').value = '';
+  document.getElementById('rsOld').value = '';
   document.getElementById('mReset').classList.add('on');
   setTimeout(function () {
     var el = document.getElementById('rsName');
     if (!el.value) el.focus();
-    else document.getElementById('rsPass').focus();
+    else document.getElementById('rsOld').focus();
   }, 140);
 };
 document.getElementById('rsCancel').onclick = function () {
@@ -1442,12 +1446,14 @@ document.getElementById('rsCancel').onclick = function () {
 };
 document.getElementById('rsOk').onclick = function () {
   var n = document.getElementById('rsName').value.trim();
+  var oldp = document.getElementById('rsOld').value.trim();
   var pw = document.getElementById('rsPass').value.trim();
   if (!n) { toast('先写名字'); return; }
-  if (pw.length < 2) { toast('密码至少 2 位'); return; }
+  if (pw.length < 2) { toast('新密码至少 2 位'); return; }
   var arr = users(), u = null;
-  arr.forEach(function (x) { if (x.name === n) u = x; });
+  arr.forEach(function (x) { if (normName(x.name) === normName(n)) u = x; });
   if (!u) { toast('没有叫「' + n + '」的人，先去注册'); return; }
+  if (u.pass !== oldp) { toast('旧密码不对，改不了'); return; }
   u.pass = pw;
   saveUsers(arr);
   document.getElementById('mReset').classList.remove('on');
@@ -1498,7 +1504,7 @@ function doLogin() {
 
   if (!name) { toast('先写名字'); return; }
   if (pass.length < 2) { toast('密码至少 2 位'); return; }
-  if (code !== INVITE) { toast('邀请码不对'); document.getElementById('gCode').value = ''; return; }
+  if (code !== inviteCode()) { toast('邀请码不对'); document.getElementById('gCode').value = ''; return; }
 
   var arr = users(), u = null;
   for (var i = 0; i < arr.length; i++) if (normName(arr[i].name) === normName(name)) u = arr[i];
@@ -1556,6 +1562,8 @@ function renderHead() {
   var qi = new Date().getDate() % QUOTES.length;
   document.getElementById('heroQuote').textContent = QUOTES[qi];
   document.getElementById('cardDate').textContent = dstr;
+  var _ivs = document.getElementById('inviteShow'); if (_ivs) _ivs.textContent = inviteCode();
+  var _ivc = document.getElementById('ivCode'); if (_ivc) _ivc.textContent = inviteCode();
   var sup = u.role === 'super';
   document.getElementById('heroName').innerHTML = '你好，' + esc(u.name) +
     (sup ? '<span class="crown">超管</span>' : '');
@@ -3663,6 +3671,12 @@ function renderAdminPanel() {
   h += '<div style="font-size:11.5px;color:#8a7fb0;margin-bottom:12px">当前超管：' +
     (who ? '<b style="color:#e8c86a">' + esc(who.name) + '</b>' : '（没有人）') + '</div>';
 
+  h += '<div class="adm-sec">🎫 邀请码</div>';
+  h += '<div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">' +
+    '<span style="font-size:12px;color:#c9c0e6">当前：<b style="color:#e8c86a">' +
+    esc(inviteCode()) + '</b></span>' +
+    '<button class="mini2" data-adm-invite="1" style="margin-left:auto">改</button></div>';
+
   h += '<div class="adm-sec">📯 首页公告</div>';
   h += '<div style="font-size:11.5px;color:#9d92c4;line-height:1.8;margin-bottom:10px;' +
     'white-space:pre-line">' + esc(cfg.notice || '（还没设置，用默认的）') + '</div>';
@@ -3762,6 +3776,22 @@ document.addEventListener('click', function (e) {
       audit((curUser() || {}).name + ' 改了超管密码');
       renderAdminPanel();
       toast('超管密码改好了');
+    });
+    return;
+  }
+
+  var iv = e.target.closest('[data-adm-invite]');
+  if (iv) {
+    askInput('修改邀请码', [{ ph: '新邀请码（2~10 位数字或字母）' }], function (v) {
+      var c = (v[0] || '').trim();
+      if (c.length < 2) { toast('太短了'); return false; }
+      if (c.length > 10) { toast('最长 10 位'); return false; }
+      var cfg = cfgGet();
+      cfg.invite = c;
+      cfgSet(cfg);
+      audit((curUser() || {}).name + ' 把邀请码改成了 ' + c);
+      renderAdminPanel(); renderHead();
+      toast('邀请码改好了：' + c);
     });
     return;
   }
@@ -4200,6 +4230,161 @@ function bindSnake() {
   reset();
 }
 
+
+function open2048() {
+  if (!curUser()) return;
+  if (gameLeft() <= 0) { toast('今天 5 局玩完了，明天再来'); return; }
+  if ((curUser().coins || 0) < 1) { toast('天宫币不够，要 1 枚'); return; }
+  modal('🔢 2048',
+    '<div style="font-size:11.5px;color:#c9c0e6;line-height:1.8;margin-bottom:8px">' +
+    '1 币一局 · 相同的数字碰在一起就合并，凑出 2048！<br>每 128 分换 1 币（每局最多 8 币）。</div>' +
+    '<div style="text-align:center;margin-bottom:8px;font-size:13px">得分 <b id="g2Score" style="color:#ffd36a">0</b>' +
+    '　·　今天还能玩 <span id="g2Left">' + gameLeft() + '</span> 次</div>' +
+    '<canvas id="g2Cv" width="320" height="320" style="width:100%;max-width:320px;height:auto;background:#0d0a1e;border-radius:14px;display:block;margin:0 auto 10px"></canvas>' +
+    '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px">' +
+    '<button class="mini2" data-g2="up" style="min-width:52px">↑</button>' +
+    '<button class="mini2" data-g2="left" style="min-width:52px">←</button>' +
+    '<button class="mini2" data-g2="down" style="min-width:52px">↓</button>' +
+    '<button class="mini2" data-g2="right" style="min-width:52px">→</button></div>' +
+    '<button class="btn" id="g2Start" style="width:100%">开 始</button>');
+  bind2048();
+}
+
+function bind2048() {
+  var cv = document.getElementById('g2Cv');
+  if (!cv) return;
+  var ctx = cv.getContext('2d');
+  var N = 4, PAD = 10, GAP = 10;
+  var cell = (320 - PAD * 2 - GAP * (N - 1)) / N;
+  var grid, score = 0, over = false, started = false;
+  var COLORS = { 2: '#eee4da', 4: '#ede0c8', 8: '#f2b179', 16: '#f59563', 32: '#f67c5f',
+                 64: '#f65e3b', 128: '#edcf72', 256: '#edcc61', 512: '#edc850',
+                 1024: '#edc53f', 2048: '#edc22e' };
+
+  function xy(r, c) { return [PAD + c * (cell + GAP), PAD + r * (cell + GAP)]; }
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function newGrid() {
+    grid = [];
+    for (var r = 0; r < N; r++) grid.push([0, 0, 0, 0]);
+    score = 0; over = false;
+    addRand(); addRand();
+  }
+  function addRand() {
+    var empty = [];
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (!grid[r][c]) empty.push([r, c]);
+    if (!empty.length) return;
+    var p = empty[Math.floor(Math.random() * empty.length)];
+    grid[p[0]][p[1]] = Math.random() < 0.9 ? 2 : 4;
+  }
+  function draw() {
+    ctx.fillStyle = '#0d0a1e'; ctx.fillRect(0, 0, 320, 320);
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
+      var pos = xy(r, c), x = pos[0], y = pos[1];
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      rr(x, y, cell, cell, 10); ctx.fill();
+      var v = grid[r][c];
+      if (v) {
+        ctx.fillStyle = COLORS[v] || '#3c3a32';
+        rr(x, y, cell, cell, 10); ctx.fill();
+        ctx.fillStyle = v <= 4 ? '#6b5a3e' : '#ffffff';
+        var fs = v < 100 ? 30 : (v < 1000 ? 24 : 18);
+        ctx.font = 'bold ' + fs + 'px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(v), x + cell / 2, y + cell / 2 + 1);
+      }
+    }
+  }
+  function slide(line) {
+    var a = line.filter(function (v) { return v; });
+    var out = [], gained = 0;
+    for (var i = 0; i < a.length; i++) {
+      if (i + 1 < a.length && a[i] === a[i + 1]) { out.push(a[i] * 2); gained += a[i] * 2; i++; }
+      else out.push(a[i]);
+    }
+    while (out.length < N) out.push(0);
+    return { line: out, gained: gained };
+  }
+  function move(dir) {
+    if (!started || over) return;
+    var moved = false, gained = 0, i, r, res, line;
+    for (i = 0; i < N; i++) {
+      if (dir === 'left' || dir === 'right') {
+        line = grid[i].slice();
+        if (dir === 'right') line.reverse();
+        res = slide(line);
+        if (dir === 'right') res.line.reverse();
+        if (res.line.join() !== grid[i].join()) moved = true;
+        grid[i] = res.line; gained += res.gained;
+      } else {
+        line = [];
+        for (r = 0; r < N; r++) line.push(grid[r][i]);
+        if (dir === 'down') line.reverse();
+        res = slide(line);
+        if (dir === 'down') res.line.reverse();
+        for (r = 0; r < N; r++) {
+          if (grid[r][i] !== res.line[r]) moved = true;
+          grid[r][i] = res.line[r];
+        }
+        gained += res.gained;
+      }
+    }
+    if (moved) {
+      score += gained;
+      var se = document.getElementById('g2Score'); if (se) se.textContent = String(score);
+      addRand(); draw();
+      if (!canMove()) end();
+    }
+  }
+  function canMove() {
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
+      if (!grid[r][c]) return true;
+      if (c + 1 < N && grid[r][c] === grid[r][c + 1]) return true;
+      if (r + 1 < N && grid[r][c] === grid[r + 1][c]) return true;
+    }
+    return false;
+  }
+  function start() {
+    if (started && !over) return;
+    if (!useGame()) return;
+    newGrid(); draw(); started = true; over = false;
+    var b = document.getElementById('g2Start'); if (b) b.textContent = '游戏进行中…';
+  }
+  function end() {
+    over = true; started = false;
+    var gain = Math.min(Math.floor(score / 128), 8);
+    var u = curUser();
+    if (u && gain > 0) { u.coins = (u.coins || 0) + gain; saveUser(u); }
+    renderHead(); syncGameUI();
+    var sl = document.getElementById('g2Left'); if (sl) sl.textContent = String(gameLeft());
+    var b = document.getElementById('g2Start'); if (b) b.textContent = '再 玩 一 局';
+    toast('没路走了！得分 ' + score + '，得 ' + gain + ' 币');
+  }
+  document.querySelectorAll('[data-g2]').forEach(function (btn) {
+    btn.onclick = function () {
+      if (!started) start();
+      move(btn.getAttribute('data-g2'));
+    };
+  });
+  var sb = document.getElementById('g2Start');
+  if (sb) sb.onclick = start;
+  document.onkeydown = function (e) {
+    if (!started) return;
+    if (e.key === 'ArrowUp') move('up');
+    else if (e.key === 'ArrowDown') move('down');
+    else if (e.key === 'ArrowLeft') move('left');
+    else if (e.key === 'ArrowRight') move('right');
+  };
+  newGrid(); draw(); started = false;
+}
+
 /* 绑定游戏入口 + 关闭弹窗时停掉贪吃蛇 */
 try {
   document.getElementById('btnRPS').onclick = function () {
@@ -4209,6 +4394,10 @@ try {
   document.getElementById('btnSnake').onclick = function () {
     document.getElementById('mBox').classList.add('on');
     openSnake();
+  };
+  document.getElementById('btn2048').onclick = function () {
+    document.getElementById('mBox').classList.add('on');
+    open2048();
   };
   document.getElementById('btnLuck2');
 } catch (e) {}
