@@ -1,4 +1,4 @@
-((function(){
+(function(){
 'use strict';
 var MAX=2*1024*1024;
 var OK=['txt','md','doc','docx','ppt','pptx','pdf','png','jpg','jpeg','gif','webp'];
