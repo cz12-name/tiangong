@@ -700,7 +700,6 @@ body.lite .pane.on{animation:none}
   to{opacity:1;transform:none}
 }
 </style>
-<script src="./guard.js"></script>
 </head>
 <body>
 
@@ -825,6 +824,11 @@ body.lite .pane.on{animation:none}
   <div class="pane" id="paneChat">
     <div class="card" style="margin-bottom:0">
       <div class="card-h"><b>💬 天宫聊天室</b><span id="msgCount">0 条</span></div>
+      <div id="netBar" style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:8px;border-radius:12px;background:rgba(255,255,255,.05);font-size:11.5px;color:#a89ecb">
+        <span id="netDot" style="width:8px;height:8px;border-radius:50%;background:#666;flex-shrink:0"></span>
+        <span id="netTxt" style="flex:1">跨设备聊天：未开启（消息只在自己手机上）</span>
+        <button class="mini2" id="btnNet">开启</button>
+      </div>
       <div class="chat">
         <div class="msgs" id="msgs"></div>
         <div id="emojiPanel" style="display:none;flex-wrap:wrap;gap:4px;padding:8px 2px 4px"></div>
@@ -1143,7 +1147,7 @@ body.lite .pane.on{animation:none}
 
 var INVITE = '1092';
 function inviteCode() { var c = jget('tg_cfg', {}); return c.invite || INVITE; }
-var APP_VER = 15;
+var APP_VER = 16;
 var QUOTES = [
   '让他说完，说出依据第几条，给他不服就重判的机会。',
   '吵架本身不算违规，骂人才算。',
@@ -1777,8 +1781,13 @@ function sendMsg() {
   if (!txt) return;
   var u = curUser();
   var list = msgs();
-  list.push({ uid: u.id, name: u.name, text: txt, t: Date.now() });
+  var mid = uid('m');
+  list.push({ id: mid, uid: u.id, name: u.name, text: txt, t: Date.now() });
   saveMsgs(list);
+  try { if (typeof MQ !== 'undefined' && MQ.on && MQ.client && MQ.topic) {
+    MQ.client.publish(MQ.topic, JSON.stringify({ id: mid, name: u.name, text: txt, t: Date.now() }));
+    _netSeen[mid] = 1;
+  } } catch (e) {}
   inp.value = '';
   addExp(3);
   pushAct('💬', u.name + '：' + (txt.length > 18 ? txt.slice(0, 18) + '…' : txt));
@@ -2079,6 +2088,94 @@ document.getElementById('chatSend').onclick = sendMsg;
 document.getElementById('chatIn').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') sendMsg();
 });
+
+
+/* ============================================================
+   跨设备聊天（MQTT 公共服务器，免费免注册）
+   ============================================================ */
+var MQ = { client: null, on: false, topic: '' };
+var _netSeen = {};
+function netTopic() { return 'tiangong-' + inviteCode(); }
+function netUI() {
+  var dot = document.getElementById('netDot');
+  var txt = document.getElementById('netTxt');
+  var btn = document.getElementById('btnNet');
+  if (!dot || !txt) return;
+  if (MQ.on) {
+    dot.style.background = '#6be08a';
+    txt.textContent = '跨设备聊天：已连接（和同学互相可见）';
+    if (btn) btn.textContent = '关闭';
+  } else {
+    dot.style.background = '#666';
+    txt.textContent = '跨设备聊天：未开启（消息只在自己手机上）';
+    if (btn) btn.textContent = '开启';
+  }
+}
+function loadMqtt(cb, fail) {
+  if (window.mqtt) return cb();
+  var urls = [
+    'https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.10.1/mqtt.min.js',
+    'https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js'
+  ];
+  var i = 0;
+  function next() {
+    if (i >= urls.length) { if (fail) fail(); return; }
+    var sc = document.createElement('script');
+    sc.src = urls[i++];
+    sc.onload = function () { cb(); };
+    sc.onerror = next;
+    document.head.appendChild(sc);
+  }
+  next();
+}
+function toggleNet() {
+  if (MQ.on) {
+    try { MQ.client.end(true); } catch (e) {}
+    MQ.client = null; MQ.on = false; netUI();
+    toast('已关闭跨设备聊天');
+    return;
+  }
+  toast('正在连接…');
+  loadMqtt(function () {
+    try {
+      var cid = 'tg' + Math.random().toString(16).slice(2, 10);
+      var c = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+        clientId: cid, reconnectPeriod: 4000, connectTimeout: 12000, clean: true
+      });
+      MQ.client = c;
+      c.on('connect', function () {
+        MQ.on = true;
+        MQ.topic = netTopic();
+        try { c.subscribe(MQ.topic); } catch (e) {}
+        netUI();
+        toast('🌐 连上了，同学现在能看到你');
+      });
+      c.on('message', function (tp, payload) {
+        try {
+          var d = JSON.parse(payload.toString());
+          if (!d || !d.text) return;
+          if (d.id && _netSeen[d.id]) return;
+          if (d.id) _netSeen[d.id] = 1;
+          var list = msgs();
+          list.push({ uid: 'net_' + (d.name || 'x'), name: (d.name || '网友'),
+                      text: String(d.text).slice(0, 300), t: d.t || Date.now(), net: true });
+          if (list.length > 600) list = list.slice(-600);
+          saveMsgs(list);
+          if (document.getElementById('msgs')) renderMsgs();
+          try { renderToday(); } catch (e) {}
+        } catch (e) {}
+      });
+      c.on('error', function () { toast('连不上服务器，可能网络受限'); });
+      c.on('close', function () { if (MQ.on) { MQ.on = false; netUI(); } });
+    } catch (e) { toast('开启失败'); }
+  }, function () { toast('联网组件下载失败，换个网络再试'); });
+}
+try {
+  var _bn = document.getElementById('btnNet');
+  if (_bn) _bn.onclick = toggleNet;
+  netUI();
+} catch (e) {}
 
 /* 聊天快捷表情 */
 (function () {
